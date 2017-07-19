@@ -27,26 +27,27 @@ def conf_scr():
 	curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
 	curses.init_pair(3, curses.COLOR_WHITE, curses.COLOR_CYAN)
 
-def write_scr(stdscr):
+def write_scr(stdscr, coinl):
 	'''Write text and formatting to screen'''
 	stdscr.addstr('cryptop v0.1.0 - by huwwp', curses.color_pair(1))
 	stdscr.addstr(1,0,'Coin    Price    Cap    High    Low', curses.color_pair(3))
 	#Loop this, one request for speed
-	stdscr.addstr(2,0,'BTC    {}'.format(getPrice('BTC')[0]), curses.color_pair(0))
-	stdscr.addstr(3,0,'ETH    {}'.format(getPrice('ETH')[0]), curses.color_pair(0))
-	stdscr.addstr(4,0,'ETC    {}'.format(getPrice('ETC')[0]), curses.color_pair(0))
-	stdscr.addstr(5,0,'XMR    {}'.format(getPrice('XMR')[0]), curses.color_pair(0))
+
+	coinvl = getPrice(','.join(coinl))
+
+	for x,y in zip(coinl, coinvl):
+		stdscr.addstr(coinl.index(x)+2,0,'{}    {}'.format(x, y), curses.color_pair(0))
+
 	stdscr.addstr(stdscr.getmaxyx()[0]-1,0, '[A] Add coin [R] Remove coin [F] Set update frequency [0]Exit', curses.color_pair(2))
-
-
 
 def main(stdscr):
 	x = 1
+	coinl = ['BTC','ETH','XMR']
 	conf_scr()
 	stdscr.clear()
 	while x != 48 and x != 27:
 		if x == 1:
-			write_scr(stdscr)
+			write_scr(stdscr, coinl)
 		x = stdscr.getch()
 
 

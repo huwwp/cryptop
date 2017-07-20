@@ -1,23 +1,29 @@
 import curses
 from curses import wrapper
 import requests
+import sys
+import time
+
+
 
 def getPrice(coin, curr = 'USD'):
 	'''Extend request to get the data on coins'''
 	try:
-		r = requests.get('https://min-api.cryptocompare.com/data/pricemulti?fsyms='+coin+'&tsyms='+curr)
+		r = requests.get('https://min-api.cryptocompare.com/data/pricemultifull?fsyms='+coin+'&tsyms='+curr)
 	except requests.exceptions.RequestException as e:
 		print(e)
 		sys.exit(1)
 
 	try:
 		data = r.json()
-		val = [v[curr] for k,v in data.items()]
+		val= [(data['RAW'][c][curr]['PRICE'],
+			data['RAW'][c][curr]['MKTCAP'],
+			data['RAW'][c][curr]['HIGH24HOUR'],
+			data['RAW'][c][curr]['LOW24HOUR']) for c in coin.split(',')]
 		return val
 	except:
-		print('Could not find the coin currency pair(s)')
+		print('Could not parse data')
 		sys.exit(1)
-
 
 def conf_scr():
 	'''Configure the screen and colors/etc'''
@@ -29,26 +35,27 @@ def conf_scr():
 
 def write_scr(stdscr, coinl):
 	'''Write text and formatting to screen'''
-	stdscr.addstr('cryptop v0.1.0 - by huwwp', curses.color_pair(1))
-	stdscr.addstr(1,0,'Coin    Price    Cap    High    Low', curses.color_pair(3))
-	#Loop this, one request for speed
 
+	height, width = stdscr.getmaxyx()
+	stdscr.addstr(0,0,'cryptop v0.1.0 - by huwwp', curses.color_pair(1))
+	stdscr.addstr(1,0,'  COIN     PRICE            CAP    HIGH     LOW                                 ', curses.color_pair(3))
 	coinvl = getPrice(','.join(coinl))
-
 	for x,y in zip(coinl, coinvl):
-		stdscr.addstr(coinl.index(x)+2,0,'{}    {}'.format(x, y), curses.color_pair(0))
+		stdscr.addstr(coinl.index(x)+2,0,'  {}    {:7.2f} {:14.2f} {:7.2f} {:7.2f}'.format(x, y[0], y[1], y[2], y[3]), curses.color_pair(0))
 
-	stdscr.addstr(stdscr.getmaxyx()[0]-1,0, '[A] Add coin [R] Remove coin [F] Set update frequency [0]Exit', curses.color_pair(2))
+	stdscr.addstr(height-1,0, '[A] Add coin [R] Remove coin [F] Set update frequency [0]Exit', curses.color_pair(2))
 
 def main(stdscr):
-	x = 1
+	inp = 0
 	coinl = ['BTC','ETH','XMR']
 	conf_scr()
 	stdscr.clear()
-	while x != 48 and x != 27:
-		if x == 1:
-			write_scr(stdscr, coinl)
-		x = stdscr.getch()
+	stdscr.nodelay(1)
+	while inp != 48 and inp != 27:
+		if inp == 102:
+			curses.halfdelay(50)
 
+		write_scr(stdscr, coinl)
+		inp = stdscr.getch()
 
 wrapper(main)

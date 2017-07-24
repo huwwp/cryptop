@@ -1,0 +1,5 @@
+- resize while inputting crashes
+- trying to add/remove with terminal of 1 height crashes
+- input same coin should overwrite
+- handle internet dropping out
+- rewrite readme

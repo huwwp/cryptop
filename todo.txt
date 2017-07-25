@@ -1,5 +1,21 @@
+
+
 - resize while inputting crashes
 - trying to add/remove with terminal of 1 height crashes
-- input same coin should overwrite
 - handle internet dropping out
 - rewrite readme
+
+****
+EXT
+****
+
+- colour customisation
+- rewrite dim as y,x for readability
+x,y = stdscr.getmaxyx()
+
+
+****
+NOTE
+****
+
+It appears to be a genuine limitation of python ncurses to have a string on the bottom line, if you resize the terminal to thinner than the width of the string it wraps onto the next line and produces an error despite trying to catch with SIGWINCH or ncurses functions

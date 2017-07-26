@@ -1,19 +1,30 @@
 import curses
 from curses import wrapper
 import requests
+import os
 import sys
+import re
 
 #GLOBALS!
-datafile = '.cryptop'
+datafile = os.path.expanduser('~') + '/.cryptop'
+#datafile = '.cryptop'
+p = re.compile('[A-Z]{3},\d{0,}\.?\d{0,}')
 
+def if_coin(coin):
+	'''Check if coin exists'''
+	t = requests.get('https://www.cryptocompare.com/api/data/coinlist/')
+	data = t.json()
+	if coin in data['Data'].keys():
+		return True
+	else:
+		return False
 
 def getPrice(coin, curr = 'USD'):
-	'''Extend request to get the data on coins'''
+	'''Get the data on coins'''
 	try:
 		r = requests.get('https://min-api.cryptocompare.com/data/pricemultifull?fsyms='+coin+'&tsyms='+curr)
 	except requests.exceptions.RequestException as e:
-		print(e)
-		sys.exit(1)
+		sys.exit('Could not complete request')
 
 	try:
 		data = r.json()
@@ -22,8 +33,7 @@ def getPrice(coin, curr = 'USD'):
 			data['RAW'][c][curr]['LOW24HOUR']) for c in coin.split(',')]
 		return val
 	except:
-		print('Could not parse data')
-		sys.exit(1)
+		sys.exit('Could not parse data')
 
 def conf_scr():
 	'''Configure the screen and colors/etc'''
@@ -38,35 +48,46 @@ def write_scr(stdscr, coinl, heldl, dim):
 	if dim[0] >= 1:
 		stdscr.addnstr(0,0,'cryptop v0.1.0', dim[1], curses.color_pair(2))
 	if dim[0] >= 2:
-		stdscr.addnstr(1,0,'  COIN      PRICE     HELD        VAL     HIGH      LOW  ', -1, curses.color_pair(3))
+		stdscr.addnstr(1,0,'  COIN    PRICE         HELD        VAL     HIGH      LOW  ', dim[1], curses.color_pair(3))
 
-	coinvl = getPrice(','.join(coinl))
 	total = 0
-
-	if dim[0] > 3:
-		for coin,val,held in zip(coinl, coinvl, heldl):
-			if coinl.index(coin)+2 < dim[0]:
-				stdscr.addnstr(coinl.index(coin)+2,0,'  {}    {:8.2f} {:8.2f} {:10.2f} {:8.2f} {:8.2f}'.format(coin, val[0], float(held), float(held)*val[0], val[1], val[2]), -1, curses.color_pair(2))
-			total += float(held)*val[0]
+	if coinl:
+		coinvl = getPrice(','.join(coinl))
+		
+		if dim[0] > 3:
+			for coin,val,held in zip(coinl, coinvl, heldl):
+				if coinl.index(coin)+2 < dim[0]:
+					stdscr.addnstr(coinl.index(coin)+2,0,'  {}  {:8.2f} {:12.8f} {:10.2f} {:8.2f} {:8.2f}'.format(coin, val[0], float(held), float(held)*val[0], val[1], val[2]), dim[1], curses.color_pair(2))
+				total += float(held)*val[0]
 	
-	if dim[0] > len(coinl) + 6:
-		stdscr.addnstr(dim[0]-4,0, 'Total Holdings: {:10.2f}    '.format(total), dim[1], curses.color_pair(3))
-		stdscr.addnstr(dim[0]-2,0, '[A] Add coin [R] Remove coin [0]Exit', dim[1], curses.color_pair(2))
-	#Comming from below causes issues
+	if dim[0] > len(coinl) + 3:
+		stdscr.addnstr(dim[0]-2,0, 'Total Holdings: {:10.2f}    '.format(total), dim[1], curses.color_pair(3))
+		stdscr.addnstr(dim[0]-1,0, '[A] Add coin [R] Remove coin [0]Exit', dim[1], curses.color_pair(2))
 
 def read_file():
 	'''Reads the data file'''
-	with open(datafile, 'r') as f:
-		data = f.readlines()
-		data = [x.strip() for x in data]
-		coinl, heldl = zip(*(s.split(',') for s in data))
-		coinl = [x for x in coinl]
-		heldl = [x for x in heldl]
+	coinl = []
+	heldl = []
 
-	f.close()
-	return coinl, heldl
+	try:
+		with open(datafile, 'r') as f:
+			data = f.readlines()
+			data = [x.strip() for x in data]
+			coinl, heldl = zip(*(s.split(',') for s in data))
+			coinl = [x for x in coinl]
+			heldl = [x for x in heldl]
+
+		f.close()
+		return coinl, heldl
+
+	except:
+		with open(datafile, 'w') as f:
+			print('')
+		f.close()
+		return coinl,heldl
 
 def write_file(coinl, heldl):
+	'''Writes the lists to the data file'''
 	with open(datafile, 'w') as f:
 		for x,y in zip(coinl, heldl):
 			f.write('{},{}\n'.format(x,y))
@@ -74,6 +95,7 @@ def write_file(coinl, heldl):
 	f.close()
 
 def get_string(stdscr, prompt):
+	'''Requests and string from the user'''
 	stdscr.nodelay(0)
 	curses.echo()
 	stdscr.clear()
@@ -90,20 +112,36 @@ def get_string(stdscr, prompt):
 
 
 def add_coin(input, coinl, heldl):
-	input = input.split(',')
-	if input[0] not in coinl:
-		coinl.append(input[0])
-		heldl.append(input[1])
+	'''Adds a coin and amount held'''
+	if not p.match(input):
+		return coinl, heldl
 	else:
-		heldl[coinl.index(input[0])] = input[1]
+		input = input.split(',')
+		
+		if input[0] in coinl:
+			heldl[coinl.index(input[0])] = input[1]
+		else:
+			if if_coin(input[0]):
+				coinl.append(input[0])
+				heldl.append(input[1])
 
-	return coinl, heldl
+				
+		
+		return coinl, heldl
 
 def rem_coin(input, coinl, heldl):
-	heldl = [x for x in heldl if x.index(x) != coinl.index(input)]
-	coinl = [x for x in coinl if x != input]
-	return coinl, heldl
-
+	'''Remove coin and ammount held from list'''
+	#input = '' if window is resized while waiting for string
+	if input == '':
+		return coinl,heldl
+	else:
+		try:
+			heldl = [x for x in heldl if x.index(x) != coinl.index(input)]
+			coinl = [x for x in coinl if x != input]
+		except:
+			pass
+		
+		return coinl, heldl
 
 def main(stdscr):
 	inp = 0
@@ -113,11 +151,18 @@ def main(stdscr):
 	stdscr.clear()
 	stdscr.nodelay(1)
 	while inp != 48 and inp != 27:
+		while True:
+			try:
+				write_scr(stdscr, coinl, heldl, dim)
+			except curses.error:
+				pass
 
-		if dim != stdscr.getmaxyx():
-			stdscr.clear()
+			inp = stdscr.getch()
+			if inp != curses.KEY_RESIZE:
+				break
+			stdscr.erase()
 			dim = stdscr.getmaxyx()
-
+			
 		if inp == 97 or inp == 65:
 			if dim[0] > 2:
 				data = get_string(stdscr, 'Enter in format Symbol,Ammount e.g. BTC,10')
@@ -127,10 +172,6 @@ def main(stdscr):
 			if dim[0] > 2:
 				data = get_string(stdscr, 'Enter the symbol of coin to be removed, e.g. BTC')
 				coinl, heldl = rem_coin(data, coinl, heldl)
-
-
-		write_scr(stdscr, coinl, heldl, dim)
-		inp = stdscr.getch()
 
 	write_file(coinl, heldl)
 

@@ -1,11 +1,11 @@
 - handle internet dropping out
 - rewrite readme
+- fails reading .cryptopc as curses.COLOR_RED are converted to ints behind the scene
 
 ****
 EXT
 ****
 
-- colour customisation
 - rewrite dim as y,x for readability
 x,y = stdscr.getmaxyx()
 - ux design stuff

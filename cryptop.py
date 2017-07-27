@@ -7,7 +7,7 @@ import re
 
 #GLOBALS!
 datafile = os.path.expanduser('~') + '/.cryptop'
-#datafile = '.cryptop'
+confile = os.path.expanduser('~') + '/.cryptopc'
 p = re.compile('[A-Z]{3},\d{0,}\.?\d{0,}')
 
 def if_coin(coin):
@@ -22,7 +22,9 @@ def if_coin(coin):
 def getPrice(coin, curr = 'USD'):
 	'''Get the data on coins'''
 	try:
-		r = requests.get('https://min-api.cryptocompare.com/data/pricemultifull?fsyms='+coin+'&tsyms='+curr)
+		r = requests.get(
+			'https://min-api.cryptocompare.com/data/pricemultifull?fsyms='
+			+coin+'&tsyms='+curr)
 	except requests.exceptions.RequestException as e:
 		sys.exit('Could not complete request')
 
@@ -35,20 +37,50 @@ def getPrice(coin, curr = 'USD'):
 	except:
 		sys.exit('Could not parse data')
 
+def read_conf_file():
+	'''Reads the conf file'''
+	
+	template = """#text
+curses.COLOR_RED
+#banner
+curses.COLOR_YELLOW
+#banner_text
+curses.COLOR_BLACK
+#background
+-1"""
+
+	try:
+		with open(confile, 'r') as f:
+			lines = f.readlines()
+			lines = [x for x in lines if not x.startswith('#')]
+
+		f.close()
+		return lines
+
+	except:
+		with open(confile, 'w') as f:
+			f.write(template)
+		f.close()
+		return curses.COLOR_RED, curses.COLOR_YELLOW, curses.COLOR_BLACK, -1
+
+
 def conf_scr():
 	'''Configure the screen and colors/etc'''
 	curses.curs_set(0)
 	curses.start_color()
-	curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
-	curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
-	curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+	curses.use_default_colors()
+	text, banner, banner_text, background = read_conf_file()
+	curses.init_pair(2, text, background)
+	curses.init_pair(3, banner_text, banner)
 
 def write_scr(stdscr, coinl, heldl, dim):
 	'''Write text and formatting to screen'''
 	if dim[0] >= 1:
 		stdscr.addnstr(0,0,'cryptop v0.1.0', dim[1], curses.color_pair(2))
 	if dim[0] >= 2:
-		stdscr.addnstr(1,0,'  COIN    PRICE         HELD        VAL     HIGH      LOW  ', dim[1], curses.color_pair(3))
+		stdscr.addnstr(1,0,
+			'  COIN    PRICE         HELD        VAL     HIGH      LOW  ',
+			dim[1], curses.color_pair(3))
 
 	total = 0
 	if coinl:
@@ -57,12 +89,18 @@ def write_scr(stdscr, coinl, heldl, dim):
 		if dim[0] > 3:
 			for coin,val,held in zip(coinl, coinvl, heldl):
 				if coinl.index(coin)+2 < dim[0]:
-					stdscr.addnstr(coinl.index(coin)+2,0,'  {}  {:8.2f} {:12.8f} {:10.2f} {:8.2f} {:8.2f}'.format(coin, val[0], float(held), float(held)*val[0], val[1], val[2]), dim[1], curses.color_pair(2))
+					stdscr.addnstr(coinl.index(coin)+2,0,
+						'  {}  {:8.2f} {:12.8f} {:10.2f} {:8.2f} {:8.2f}'
+						.format(coin, val[0], float(held), float(held)*val[0],
+							val[1], val[2]), dim[1], curses.color_pair(2))
 				total += float(held)*val[0]
 	
 	if dim[0] > len(coinl) + 3:
-		stdscr.addnstr(dim[0]-2,0, 'Total Holdings: {:10.2f}    '.format(total), dim[1], curses.color_pair(3))
-		stdscr.addnstr(dim[0]-1,0, '[A] Add coin [R] Remove coin [0]Exit', dim[1], curses.color_pair(2))
+		stdscr.addnstr(dim[0]-2,0, 'Total Holdings: {:10.2f}    '
+			.format(total), dim[1], curses.color_pair(3))
+		stdscr.addnstr(dim[0]-1,0,
+			'[A] Add coin or update value [R] Remove coin [0]Exit', dim[1],
+			curses.color_pair(2))
 
 def read_file():
 	'''Reads the data file'''
@@ -165,12 +203,14 @@ def main(stdscr):
 			
 		if inp == 97 or inp == 65:
 			if dim[0] > 2:
-				data = get_string(stdscr, 'Enter in format Symbol,Ammount e.g. BTC,10')
+				data = get_string(stdscr,
+					'Enter in format Symbol,Ammount e.g. BTC,10')
 				coinl, heldl = add_coin(data, coinl, heldl)
 
 		if inp == 82 or inp == 114:
 			if dim[0] > 2:
-				data = get_string(stdscr, 'Enter the symbol of coin to be removed, e.g. BTC')
+				data = get_string(stdscr,
+					'Enter the symbol of coin to be removed, e.g. BTC')
 				coinl, heldl = rem_coin(data, coinl, heldl)
 
 	write_file(coinl, heldl)

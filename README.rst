@@ -14,7 +14,7 @@ Installed manually, download the repo and run (pip coming soon)
 
     sudo python setup.py install
 
-Both setup.py can be run with a --user flag if you would prefer
+setup.py can be run with a --user flag if you would prefer
 not to sudo.
 
 Usage

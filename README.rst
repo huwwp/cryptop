@@ -1,6 +1,6 @@
 cryptop
 =======
-cryptop is a lightweight command line based cryptocurrency tracker.
+cryptop is a lightweight command line based cryptocurrency portfolio.
 Built on python and ncurses with simplicity in mind.
 
 .. image:: cryptop.png

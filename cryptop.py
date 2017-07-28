@@ -40,28 +40,49 @@ def getPrice(coin, curr = 'USD'):
 def read_conf_file():
 	'''Reads the conf file'''
 	
-	template = """#text
-curses.COLOR_RED
+	template = """#Acceptable values:
+#red yellow blue cyan magenta green white black -1:(terminal default)
+#text
+yellow
 #banner
-curses.COLOR_YELLOW
+yellow
 #banner_text
-curses.COLOR_BLACK
+black
 #background
 -1"""
 
+	
 	try:
 		with open(confile, 'r') as f:
 			lines = f.readlines()
-			lines = [x for x in lines if not x.startswith('#')]
-
+			lines = [x.strip() for x in lines if not x.startswith('#')]
+			for line in lines:
+				if line == 'red':
+					lines[lines.index(line)] = curses.COLOR_RED
+				elif line == 'yellow':
+					lines[lines.index(line)] = curses.COLOR_YELLOW
+				elif line == 'blue':
+					lines[lines.index(line)] = curses.COLOR_BLUE
+				elif line == 'cyan':
+					lines[lines.index(line)] = curses.COLOR_CYAN
+				elif line == 'magenta':
+					lines[lines.index(line)] = curses.COLOR_MAGENTA
+				elif line == 'green':
+					lines[lines.index(line)] = curses.COLOR_GREEN
+				elif line == 'white':
+					lines[lines.index(line)] = curses.COLOR_WHITE
+				elif line == 'black':
+					lines[lines.index(line)] = curses.COLOR_BLACK
+				else:
+					lines[lines.index(line)] = int(line)
 		f.close()
 		return lines
 
 	except:
-		with open(confile, 'w') as f:
-			f.write(template)
-		f.close()
-		return curses.COLOR_RED, curses.COLOR_YELLOW, curses.COLOR_BLACK, -1
+					with open(confile, 'w') as f:
+						f.write(template)
+					f.close()
+					return curses.COLOR_YELLOW, curses.COLOR_YELLOW, curses.COLOR_BLACK, -1
 
 
 def conf_scr():
@@ -73,33 +94,33 @@ def conf_scr():
 	curses.init_pair(2, text, background)
 	curses.init_pair(3, banner_text, banner)
 
-def write_scr(stdscr, coinl, heldl, dim):
+def write_scr(stdscr, coinl, heldl, y, x):
 	'''Write text and formatting to screen'''
-	if dim[0] >= 1:
-		stdscr.addnstr(0,0,'cryptop v0.1.0', dim[1], curses.color_pair(2))
-	if dim[0] >= 2:
+	if y >= 1:
+		stdscr.addnstr(0,0,'cryptop v0.1.0', x, curses.color_pair(2))
+	if y >= 2:
 		stdscr.addnstr(1,0,
 			'  COIN    PRICE         HELD        VAL     HIGH      LOW  ',
-			dim[1], curses.color_pair(3))
+			x, curses.color_pair(3))
 
 	total = 0
 	if coinl:
 		coinvl = getPrice(','.join(coinl))
 		
-		if dim[0] > 3:
+		if y > 3:
 			for coin,val,held in zip(coinl, coinvl, heldl):
-				if coinl.index(coin)+2 < dim[0]:
+				if coinl.index(coin)+2 < y:
 					stdscr.addnstr(coinl.index(coin)+2,0,
 						'  {}  {:8.2f} {:12.8f} {:10.2f} {:8.2f} {:8.2f}'
 						.format(coin, val[0], float(held), float(held)*val[0],
-							val[1], val[2]), dim[1], curses.color_pair(2))
+							val[1], val[2]), x, curses.color_pair(2))
 				total += float(held)*val[0]
 	
-	if dim[0] > len(coinl) + 3:
-		stdscr.addnstr(dim[0]-2,0, 'Total Holdings: {:10.2f}    '
-			.format(total), dim[1], curses.color_pair(3))
-		stdscr.addnstr(dim[0]-1,0,
-			'[A] Add coin or update value [R] Remove coin [0]Exit', dim[1],
+	if y > len(coinl) + 3:
+		stdscr.addnstr(y-2, 0, 'Total Holdings: {:10.2f}    '
+			.format(total), x, curses.color_pair(3))
+		stdscr.addnstr(y-1, 0,
+			'[A] Add coin or update value [R] Remove coin [0]Exit', x,
 			curses.color_pair(2))
 
 def read_file():
@@ -181,17 +202,17 @@ def rem_coin(input, coinl, heldl):
 		
 		return coinl, heldl
 
-def main(stdscr):
+def mainc(stdscr):
 	inp = 0
 	coinl, heldl = read_file()
-	dim = stdscr.getmaxyx()
+	y, x = stdscr.getmaxyx()
 	conf_scr()
 	stdscr.clear()
 	stdscr.nodelay(1)
 	while inp != 48 and inp != 27:
 		while True:
 			try:
-				write_scr(stdscr, coinl, heldl, dim)
+				write_scr(stdscr, coinl, heldl, y, x)
 			except curses.error:
 				pass
 
@@ -199,20 +220,24 @@ def main(stdscr):
 			if inp != curses.KEY_RESIZE:
 				break
 			stdscr.erase()
-			dim = stdscr.getmaxyx()
+			y, x = stdscr.getmaxyx()
 			
 		if inp == 97 or inp == 65:
-			if dim[0] > 2:
+			if y > 2:
 				data = get_string(stdscr,
 					'Enter in format Symbol,Ammount e.g. BTC,10')
 				coinl, heldl = add_coin(data, coinl, heldl)
 
 		if inp == 82 or inp == 114:
-			if dim[0] > 2:
+			if y > 2:
 				data = get_string(stdscr,
 					'Enter the symbol of coin to be removed, e.g. BTC')
 				coinl, heldl = rem_coin(data, coinl, heldl)
 
 	write_file(coinl, heldl)
 
-wrapper(main)
+def main():
+	wrapper(mainc)
+
+if __name__ == "__main__":
+	main()

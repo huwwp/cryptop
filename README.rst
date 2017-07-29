@@ -20,7 +20,7 @@ cryptop can be installed manually, download the repo and run
 
     sudo python setup.py install
 
-setup.py can be run with a --user flag if you would prefer
+pip and setup.py can be run with a --user flag if you would prefer
 not to sudo.
 
 Usage

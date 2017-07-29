@@ -38,8 +38,7 @@ def getPrice(coin, curr = 'USD'):
 		sys.exit('Could not parse data')
 
 def read_conf_file():
-	'''Reads the conf file'''
-	
+	'''Reads the conf file'''	
 	template = """#Acceptable values:
 #red yellow blue cyan magenta green white black -1:(terminal default)
 #text
@@ -51,7 +50,6 @@ black
 #background
 -1"""
 
-	
 	try:
 		with open(confile, 'r') as f:
 			lines = f.readlines()
@@ -79,10 +77,10 @@ black
 		return lines
 
 	except:
-					with open(confile, 'w') as f:
-						f.write(template)
-					f.close()
-					return curses.COLOR_YELLOW, curses.COLOR_YELLOW, curses.COLOR_BLACK, -1
+		with open(confile, 'w') as f:
+			f.write(template)
+		f.close()
+		return curses.COLOR_YELLOW, curses.COLOR_YELLOW, curses.COLOR_BLACK, -1
 
 
 def conf_scr():
@@ -182,9 +180,7 @@ def add_coin(input, coinl, heldl):
 		else:
 			if if_coin(input[0]):
 				coinl.append(input[0])
-				heldl.append(input[1])
-
-				
+				heldl.append(input[1])			
 		
 		return coinl, heldl
 
@@ -207,6 +203,7 @@ def mainc(stdscr):
 	coinl, heldl = read_file()
 	y, x = stdscr.getmaxyx()
 	conf_scr()
+	stdscr.bkgd(' ', curses.color_pair(2))
 	stdscr.clear()
 	stdscr.nodelay(1)
 	while inp != 48 and inp != 27:

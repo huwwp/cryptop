@@ -3,12 +3,18 @@ cryptop
 cryptop is a lightweight command line based cryptocurrency portfolio.
 Built on python and ncurses with simplicity in mind.
 
-.. image:: cryptop.png
+.. image:: img\cryptop.png
 
 Installation
 ------------
 
-Installed manually, download the repo and run (pip coming soon)
+The easiest way to install cryptop is through pip
+
+.. code:: bash
+
+    sudo pip install cryptop
+
+cryptop can be installed manually, download the repo and run
 
 .. code:: bash
 
@@ -26,12 +32,17 @@ Start from a terminal.
 
     cryptop
 
-Cryptop creates two config dotfiles in your home directory.
+Customisation
+-------------
 
-.cryptop contains the holdings for the porftolio.
+Cryptop creates two config dotfiles in your home directory. .cryptop contains 
+the holdings data for the porftolio.
 
 .cryptopc contains light configuration/ricing options for colors and backgrounds.
 
+.. image:: img\fall.png
+
+.. image:: img\aesth.png
 
 Credits
 -------

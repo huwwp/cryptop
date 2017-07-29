@@ -31,6 +31,8 @@ Start from a terminal.
 .. code:: bash
 
     cryptop
+    
+Follow the on screen instructions to add/remove cryptocurrencies from your portfolio.
 
 Customisation
 -------------
@@ -49,9 +51,11 @@ Credits
 
 Uses the cryptocompare.com API
 
-Tipjar
+Support
 ------
 
+My aim is to become a blockchain developer but I have a long way to go, if you
+would like to support me on my journey here is my address.
 BTC: 15wNW29q7XAEbC8yus49CWvt91JkhcdkoW
 
 Disclosure

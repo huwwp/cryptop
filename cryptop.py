@@ -14,7 +14,7 @@ basedir = os.path.join(os.path.expanduser('~'), '.cryptop')
 datafile = os.path.join(basedir, 'wallet.json')
 conffile = os.path.join(basedir, 'config.ini')
 config = configparser.ConfigParser()
-p = re.compile('[A-Z]{3},\d{0,}\.?\d{0,}')
+p = re.compile('[A-Z]{3,4},\d{0,}\.?\d{0,}')
 
 
 def read_configuration(confpath):

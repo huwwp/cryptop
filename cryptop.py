@@ -6,6 +6,7 @@ import shutil
 import configparser
 
 import requests
+import requests_cache
 
 #GLOBALS!
 basedir = os.path.join(os.path.expanduser('~'), '.cryptop')
@@ -217,7 +218,7 @@ def mainc(stdscr):
 		if inp == 97 or inp == 65:
 			if y > 2:
 				data = get_string(stdscr,
-					'Enter in format Symbol,Ammount e.g. BTC,10')
+					'Enter in format Symbol,Amount e.g. BTC,10')
 				coinl, heldl = add_coin(data, coinl, heldl)
 
 		if inp == 82 or inp == 114:
@@ -236,6 +237,9 @@ def main():
 
 	global config
 	config = read_configuration(conffile)
+
+	requests_cache.install_cache(cache_name='api_cache', backend='memory',
+		expire_after=int(config['api'].get('cache', 10)))
 
 	curses.wrapper(mainc)
 

@@ -4,13 +4,14 @@ import sys
 import re
 import shutil
 import configparser
+import json
 
 import requests
 import requests_cache
 
 #GLOBALS!
 basedir = os.path.join(os.path.expanduser('~'), '.cryptop')
-datafile = os.path.join(basedir, 'data')
+datafile = os.path.join(basedir, 'wallet.json')
 conffile = os.path.join(basedir, 'config.ini')
 config = configparser.ConfigParser()
 p = re.compile('[A-Z]{3},\d{0,}\.?\d{0,}')
@@ -83,7 +84,7 @@ def conf_scr():
 	curses.init_pair(3, banner_text, banner)
 
 
-def write_scr(stdscr, coinl, heldl, y, x):
+def write_scr(stdscr, wallet, y, x):
 	'''Write text and formatting to screen'''
 	if y >= 1:
 		stdscr.addnstr(0,0,'cryptop v0.1.0', x, curses.color_pair(2))
@@ -93,6 +94,8 @@ def write_scr(stdscr, coinl, heldl, y, x):
 			x, curses.color_pair(3))
 
 	total = 0
+	coinl = list(wallet.keys())
+	heldl = list(wallet.values())
 	if coinl:
 		coinvl = getPrice(','.join(coinl))
 
@@ -113,36 +116,21 @@ def write_scr(stdscr, coinl, heldl, y, x):
 			curses.color_pair(2))
 
 
-def read_file():
-	'''Reads the data file'''
-	coinl = []
-	heldl = []
-
+def read_wallet():
+	''' Reads the wallet data from its json file '''
 	try:
 		with open(datafile, 'r') as f:
-			data = f.readlines()
-			data = [x.strip() for x in data]
-			coinl, heldl = zip(*(s.split(',') for s in data))
-			coinl = [x for x in coinl]
-			heldl = [x for x in heldl]
-
-		f.close()
-		return coinl, heldl
-
-	except:
-		with open(datafile, 'w') as f:
-			print('')
-		f.close()
-		return coinl,heldl
+			return json.load(f)
+	except (FileNotFoundError, json.decoder.JSONDecodeError):
+		# missing or malformed wallet
+		write_wallet({})
+		return {}
 
 
-def write_file(coinl, heldl):
-	'''Writes the lists to the data file'''
+def write_wallet(wallet):
+	''' Reads the wallet data to its json file '''
 	with open(datafile, 'w') as f:
-		for x,y in zip(coinl, heldl):
-			f.write('{},{}\n'.format(x,y))
-
-	f.close()
+		json.dump(wallet, f)
 
 
 def get_string(stdscr, prompt):
@@ -162,41 +150,34 @@ def get_string(stdscr, prompt):
 	return input
 
 
-def add_coin(input, coinl, heldl):
-	'''Adds a coin and amount held'''
-	if not p.match(input):
-		return coinl, heldl
-	else:
-		input = input.split(',')
+def add_coin(coin_amount, wallet):
+	''' Remove a coin and its amount to the wallet '''
+	if not p.match(coin_amount):
+		return wallet
 
-		if input[0] in coinl:
-			heldl[coinl.index(input[0])] = input[1]
-		else:
-			if if_coin(input[0]):
-				coinl.append(input[0])
-				heldl.append(input[1])
+	coin, amount = coin_amount.split(',')
+	wallet[coin] = amount
 
-		return coinl, heldl
+	return wallet
 
 
-def rem_coin(input, coinl, heldl):
-	'''Remove coin and ammount held from list'''
-	#input = '' if window is resized while waiting for string
-	if input == '':
-		return coinl,heldl
-	else:
-		try:
-			heldl = [x for x in heldl if x.index(x) != coinl.index(input)]
-			coinl = [x for x in coinl if x != input]
-		except:
-			pass
+def remove_coin(coin, wallet):
+	''' Remove a coin and its amount from the wallet '''
+	#coin = '' if window is resized while waiting for string
+	if coin == '':
+		return wallet
 
-		return coinl, heldl
+	try:
+		del wallet[coin]
+	except KeyError:
+		pass
+
+	return wallet
 
 
 def mainc(stdscr):
 	inp = 0
-	coinl, heldl = read_file()
+	wallet = read_wallet()
 	y, x = stdscr.getmaxyx()
 	conf_scr()
 	stdscr.bkgd(' ', curses.color_pair(2))
@@ -205,7 +186,7 @@ def mainc(stdscr):
 	while inp != 48 and inp != 27:
 		while True:
 			try:
-				write_scr(stdscr, coinl, heldl, y, x)
+				write_scr(stdscr, wallet, y, x)
 			except curses.error:
 				pass
 
@@ -219,15 +200,15 @@ def mainc(stdscr):
 			if y > 2:
 				data = get_string(stdscr,
 					'Enter in format Symbol,Amount e.g. BTC,10')
-				coinl, heldl = add_coin(data, coinl, heldl)
+				wallet = add_coin(data, wallet)
 
 		if inp == 82 or inp == 114:
 			if y > 2:
 				data = get_string(stdscr,
 					'Enter the symbol of coin to be removed, e.g. BTC')
-				coinl, heldl = rem_coin(data, coinl, heldl)
+				wallet = remove_coin(data, wallet)
 
-	write_file(coinl, heldl)
+	write_wallet(wallet)
 
 
 def main():

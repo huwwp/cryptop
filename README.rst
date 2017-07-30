@@ -1,6 +1,6 @@
 cryptop
 =======
-cryptop is a lightweight command line based cryptocurrency portfolio. 
+cryptop is a lightweight command line based cryptocurrency portfolio.
 Built on python and ncurses with simplicity in mind, cryptop updates in realtime.
 
 .. image:: img\cryptop.png
@@ -31,29 +31,30 @@ Start from a terminal.
 .. code:: bash
 
     cryptop
-    
+
 Follow the on screen instructions to add/remove cryptocurrencies from your portfolio.
 
 Customisation
 -------------
 
-Cryptop creates two config dotfiles in your home directory. .cryptop contains 
-the holdings data for the porftolio.
+Cryptop creates two config files in a .cryptop folder in your home directory.
 
-.cryptopc contains light configuration/ricing options for colors and backgrounds.
+.crypto/config.ini contains currency and theme configuration (text and backgrounds colors)
 
 .. image:: img\fall.png
 
 .. image:: img\aesth.png
 
+.cryptop/wallet.json contains the coins and amounts you hold, you shouldn't need to edit it manually
+
 Credits
 -------
 
-Uses the `cryptocompare.com API 
+Uses the `cryptocompare.com API
 <http://www.cryptocompare.com/>`_.
 
 Support
-------
+-------
 
 My aim is to become a blockchain developer but I have a long way to go, if you
 would like to support me on my journey here is my address.

@@ -8,7 +8,7 @@ import re
 #GLOBALS!
 datafile = os.path.expanduser('~') + '/.cryptop'
 confile = os.path.expanduser('~') + '/.cryptopc'
-p = re.compile('[A-Z]{3,4},\d{0,}\.?\d{0,}')
+p = re.compile('[A-Z]{3,5},\d{0,}\.?\d{0,}')
 
 def if_coin(coin):
 	'''Check if coin exists'''

@@ -50,7 +50,7 @@ Credits
 -------
 
 Uses the `cryptocompare.com API 
-<http://www.python.org/>`_.
+<http://www.cryptocompare.com/>`_.
 
 Support
 ------

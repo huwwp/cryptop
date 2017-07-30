@@ -16,6 +16,10 @@ setup(
     url='https://github.com/huwwp/cryptop',
     license='MIT',
     keywords='crypto cli portfolio curses cryptocurrency bitcoin',
+    classifiers = [
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+    ],
     packages=find_packages(exclude=('tests', 'docs')),
     install_requires=['requests'],
     py_modules=['cryptop'],

@@ -1,14 +1,29 @@
 import curses
-from curses import wrapper
-import requests
 import os
 import sys
 import re
+import shutil
+import configparser
+
+import requests
 
 #GLOBALS!
-datafile = os.path.expanduser('~') + '/.cryptop'
-confile = os.path.expanduser('~') + '/.cryptopc'
+basedir = os.path.join(os.path.expanduser('~'), '.cryptop')
+datafile = os.path.join(basedir, 'data')
+conffile = os.path.join(basedir, 'config.ini')
+config = configparser.ConfigParser()
 p = re.compile('[A-Z]{3},\d{0,}\.?\d{0,}')
+
+
+def read_configuration(confpath):
+	# copy our default config file
+	if not os.path.isfile(confpath):
+		defaultconf = os.path.join(os.path.dirname(__file__), 'config.ini')
+		shutil.copyfile(defaultconf, conffile)
+
+	config.read(confpath)
+	return config
+
 
 def if_coin(coin):
 	'''Check if coin exists'''
@@ -18,6 +33,7 @@ def if_coin(coin):
 		return True
 	else:
 		return False
+
 
 def getPrice(coin, curr = 'USD'):
 	'''Get the data on coins'''
@@ -37,50 +53,20 @@ def getPrice(coin, curr = 'USD'):
 	except:
 		sys.exit('Could not parse data')
 
-def read_conf_file():
-	'''Reads the conf file'''	
-	template = """#Acceptable values:
-#red yellow blue cyan magenta green white black -1:(terminal default)
-#text
-yellow
-#banner
-yellow
-#banner_text
-black
-#background
--1"""
 
-	try:
-		with open(confile, 'r') as f:
-			lines = f.readlines()
-			lines = [x.strip() for x in lines if not x.startswith('#')]
-			for line in lines:
-				if line == 'red':
-					lines[lines.index(line)] = curses.COLOR_RED
-				elif line == 'yellow':
-					lines[lines.index(line)] = curses.COLOR_YELLOW
-				elif line == 'blue':
-					lines[lines.index(line)] = curses.COLOR_BLUE
-				elif line == 'cyan':
-					lines[lines.index(line)] = curses.COLOR_CYAN
-				elif line == 'magenta':
-					lines[lines.index(line)] = curses.COLOR_MAGENTA
-				elif line == 'green':
-					lines[lines.index(line)] = curses.COLOR_GREEN
-				elif line == 'white':
-					lines[lines.index(line)] = curses.COLOR_WHITE
-				elif line == 'black':
-					lines[lines.index(line)] = curses.COLOR_BLACK
-				else:
-					lines[lines.index(line)] = int(line)
-		f.close()
-		return lines
+def get_theme_colors():
+	''' Returns curses colors according to the config'''
+	def get_curses_color(name_or_value):
+		try:
+			return getattr(curses, 'COLOR_' + name_or_value.upper())
+		except AttributeError:
+			return int(name_or_value)
 
-	except:
-		with open(confile, 'w') as f:
-			f.write(template)
-		f.close()
-		return curses.COLOR_YELLOW, curses.COLOR_YELLOW, curses.COLOR_BLACK, -1
+	theme_config = config['theme']
+	return get_curses_color(theme_config.get('text', 'yellow')), \
+		get_curses_color(theme_config.get('banner', 'yellow')), \
+		get_curses_color(theme_config.get('banner_text', 'black')), \
+		get_curses_color(theme_config.get('background', -1))
 
 
 def conf_scr():
@@ -88,9 +74,10 @@ def conf_scr():
 	curses.curs_set(0)
 	curses.start_color()
 	curses.use_default_colors()
-	text, banner, banner_text, background = read_conf_file()
+	text, banner, banner_text, background = get_theme_colors()
 	curses.init_pair(2, text, background)
 	curses.init_pair(3, banner_text, banner)
+
 
 def write_scr(stdscr, coinl, heldl, y, x):
 	'''Write text and formatting to screen'''
@@ -104,7 +91,7 @@ def write_scr(stdscr, coinl, heldl, y, x):
 	total = 0
 	if coinl:
 		coinvl = getPrice(','.join(coinl))
-		
+
 		if y > 3:
 			for coin,val,held in zip(coinl, coinvl, heldl):
 				if coinl.index(coin)+2 < y:
@@ -113,13 +100,14 @@ def write_scr(stdscr, coinl, heldl, y, x):
 						.format(coin, val[0], float(held), float(held)*val[0],
 							val[1], val[2]), x, curses.color_pair(2))
 				total += float(held)*val[0]
-	
+
 	if y > len(coinl) + 3:
 		stdscr.addnstr(y-2, 0, 'Total Holdings: {:10.2f}    '
 			.format(total), x, curses.color_pair(3))
 		stdscr.addnstr(y-1, 0,
 			'[A] Add coin or update value [R] Remove coin [0]Exit', x,
 			curses.color_pair(2))
+
 
 def read_file():
 	'''Reads the data file'''
@@ -143,6 +131,7 @@ def read_file():
 		f.close()
 		return coinl,heldl
 
+
 def write_file(coinl, heldl):
 	'''Writes the lists to the data file'''
 	with open(datafile, 'w') as f:
@@ -150,6 +139,7 @@ def write_file(coinl, heldl):
 			f.write('{},{}\n'.format(x,y))
 
 	f.close()
+
 
 def get_string(stdscr, prompt):
 	'''Requests and string from the user'''
@@ -174,15 +164,16 @@ def add_coin(input, coinl, heldl):
 		return coinl, heldl
 	else:
 		input = input.split(',')
-		
+
 		if input[0] in coinl:
 			heldl[coinl.index(input[0])] = input[1]
 		else:
 			if if_coin(input[0]):
 				coinl.append(input[0])
-				heldl.append(input[1])			
-		
+				heldl.append(input[1])
+
 		return coinl, heldl
+
 
 def rem_coin(input, coinl, heldl):
 	'''Remove coin and ammount held from list'''
@@ -195,8 +186,9 @@ def rem_coin(input, coinl, heldl):
 			coinl = [x for x in coinl if x != input]
 		except:
 			pass
-		
+
 		return coinl, heldl
+
 
 def mainc(stdscr):
 	inp = 0
@@ -218,7 +210,7 @@ def mainc(stdscr):
 				break
 			stdscr.erase()
 			y, x = stdscr.getmaxyx()
-			
+
 		if inp == 97 or inp == 65:
 			if y > 2:
 				data = get_string(stdscr,
@@ -233,8 +225,17 @@ def mainc(stdscr):
 
 	write_file(coinl, heldl)
 
+
 def main():
-	wrapper(mainc)
+	if os.path.isfile(basedir):
+		sys.exit('Please remove your old configuration file at {}'.format(basedir))
+	os.makedirs(basedir, exist_ok=True)
+
+	global config
+	config = read_configuration(conffile)
+
+	curses.wrapper(mainc)
+
 
 if __name__ == "__main__":
 	main()

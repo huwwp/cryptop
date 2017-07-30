@@ -35,8 +35,11 @@ def if_coin(coin):
 		return False
 
 
-def getPrice(coin, curr = 'USD'):
+def getPrice(coin, curr=None):
 	'''Get the data on coins'''
+	if not curr:
+		curr = config['api'].get('currency', 'USD')
+
 	try:
 		r = requests.get(
 			'https://min-api.cryptocompare.com/data/pricemultifull?fsyms='

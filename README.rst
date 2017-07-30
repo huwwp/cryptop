@@ -1,7 +1,7 @@
 cryptop
 =======
-cryptop is a lightweight command line based cryptocurrency portfolio.
-Built on python and ncurses with simplicity in mind.
+cryptop is a lightweight command line based cryptocurrency portfolio. 
+Built on python and ncurses with simplicity in mind, cryptop updates in realtime.
 
 .. image:: img\cryptop.png
 
@@ -49,7 +49,8 @@ the holdings data for the porftolio.
 Credits
 -------
 
-Uses the cryptocompare.com API
+Uses the `cryptocompare.com API 
+<http://www.python.org/>`_.
 
 Support
 ------

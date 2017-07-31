@@ -167,7 +167,7 @@ def mainc(stdscr):
 	stdscr.bkgd(' ', curses.color_pair(2))
 	stdscr.clear()
 	stdscr.nodelay(1)
-	while inp != 48 and inp != 27:
+	while inp not in (27, 48):
 		while True:
 			try:
 				write_scr(stdscr, wallet, y, x)
@@ -180,13 +180,13 @@ def mainc(stdscr):
 			stdscr.erase()
 			y, x = stdscr.getmaxyx()
 
-		if inp == 97 or inp == 65:
+		if inp in (65, 97):
 			if y > 2:
 				data = get_string(stdscr,
 					'Enter in format Symbol,Amount e.g. BTC,10')
 				wallet = add_coin(data, wallet)
 
-		if inp == 82 or inp == 114:
+		if inp in (82, 114):
 			if y > 2:
 				data = get_string(stdscr,
 					'Enter the symbol of coin to be removed, e.g. BTC')

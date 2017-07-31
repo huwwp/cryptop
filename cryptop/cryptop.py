@@ -6,6 +6,7 @@ import shutil
 import configparser
 import json
 import pkg_resources
+import time
 
 import requests
 import requests_cache
@@ -179,19 +180,18 @@ def mainc(stdscr):
     stdscr.bkgd(' ', curses.color_pair(2))
     stdscr.clear()
     stdscr.nodelay(1)
-    # while inp != 48 and inp != 27 and inp != 81 and inp != 113:
-    while inp not in {KEY_ZERO, KEY_ESCAPE, KEY_Q, KEY_q}:
-        while True:
-            try:
-                write_scr(stdscr, wallet, y, x)
-            except curses.error:
-                pass
+    sleep_time = float(CONFIG['api'].get('iter_sleep', 0.25))
 
-            inp = stdscr.getch()
-            if inp != curses.KEY_RESIZE:
-                break
+    while inp not in {KEY_ZERO, KEY_ESCAPE, KEY_Q, KEY_q}:
+        write_scr(stdscr, wallet, y, x)
+
+        inp = stdscr.getch()
+        if inp == -1:
+            time.sleep(sleep_time)
+        if inp == curses.KEY_RESIZE:
             stdscr.erase()
             y, x = stdscr.getmaxyx()
+            continue
 
         if inp in {KEY_a, KEY_A}:
             if y > 2:

@@ -9,7 +9,7 @@ import json
 import requests
 import requests_cache
 
-#GLOBALS!
+# GLOBALS!
 basedir = os.path.join(os.path.expanduser('~'), '.cryptop')
 datafile = os.path.join(basedir, 'wallet.json')
 conffile = os.path.join(basedir, 'config.ini')
@@ -26,6 +26,7 @@ def read_configuration(confpath):
 	config.read(confpath)
 	return config
 
+
 def if_coin(coin, url='https://www.cryptocompare.com/api/data/coinlist/'):
 	'''Check if coin exists'''
 	return coin in requests.get(url).json()['Data']
@@ -33,22 +34,19 @@ def if_coin(coin, url='https://www.cryptocompare.com/api/data/coinlist/'):
 
 def getPrice(coin, curr=None):
 	'''Get the data on coins'''
-	if not curr:
-		curr = config['api'].get('currency', 'USD')
+	curr = curr or config['api'].get('currency', 'USD')
+	fmt = 'https://min-api.cryptocompare.com/data/pricemultifull?fsyms={}&tsyms={}'
 
 	try:
-		r = requests.get(
-			'https://min-api.cryptocompare.com/data/pricemultifull?fsyms='
-			+coin+'&tsyms='+curr)
-	except requests.exceptions.RequestException as e:
+		r = requests.get(fmt.format(coin, curr))
+	except requests.exceptions.RequestException:
 		sys.exit('Could not complete request')
 
 	try:
-		data = r.json()
-		val= [(data['RAW'][c][curr]['PRICE'],
-			data['RAW'][c][curr]['HIGH24HOUR'],
-			data['RAW'][c][curr]['LOW24HOUR']) for c in coin.split(',')]
-		return val
+		data_raw = r.json()['RAW']
+		return [(data_raw[c][curr]['PRICE'],
+				data_raw[c][curr]['HIGH24HOUR'],
+				data_raw[c][curr]['LOW24HOUR']) for c in coin.split(',')]
 	except:
 		sys.exit('Could not parse data')
 
@@ -62,10 +60,10 @@ def get_theme_colors():
 			return int(name_or_value)
 
 	theme_config = config['theme']
-	return get_curses_color(theme_config.get('text', 'yellow')), \
-		get_curses_color(theme_config.get('banner', 'yellow')), \
-		get_curses_color(theme_config.get('banner_text', 'black')), \
-		get_curses_color(theme_config.get('background', -1))
+	return (get_curses_color(theme_config.get('text', 'yellow')),
+		get_curses_color(theme_config.get('banner', 'yellow')),
+		get_curses_color(theme_config.get('banner_text', 'black')),
+		get_curses_color(theme_config.get('background', -1)))
 
 
 def conf_scr():
@@ -81,11 +79,10 @@ def conf_scr():
 def write_scr(stdscr, wallet, y, x):
 	'''Write text and formatting to screen'''
 	if y >= 1:
-		stdscr.addnstr(0,0,'cryptop v0.1.1', x, curses.color_pair(2))
+		stdscr.addnstr(0, 0,'cryptop v0.1.1', x, curses.color_pair(2))
 	if y >= 2:
-		stdscr.addnstr(1,0,
-			'  COIN      PRICE          HELD        VAL     HIGH      LOW  ',
-			x, curses.color_pair(3))
+		header = '  COIN      PRICE          HELD        VAL     HIGH      LOW  '
+		stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
 
 	total = 0
 	coinl = list(wallet.keys())
@@ -135,13 +132,12 @@ def get_string(stdscr, prompt):
 	stdscr.addnstr(0,0, prompt, -1, curses.color_pair(2))
 	curses.curs_set(1)
 	stdscr.refresh()
-	input = stdscr.getstr(1, 0, 20)
-	input = input.decode()
+	in_str = stdscr.getstr(1, 0, 20).decode()
 	curses.noecho()
 	curses.curs_set(0)
 	stdscr.clear()
 	stdscr.nodelay(1)
-	return input
+	return in_str
 
 
 def add_coin(coin_amount, wallet):
@@ -157,15 +153,9 @@ def add_coin(coin_amount, wallet):
 
 def remove_coin(coin, wallet):
 	''' Remove a coin and its amount from the wallet '''
-	#coin = '' if window is resized while waiting for string
-	if coin == '':
-		return wallet
-
-	try:
-		del wallet[coin]
-	except KeyError:
-		pass
-
+	# coin = '' if window is resized while waiting for string
+	if coin:
+		return wallet.pop(coin, None)
 	return wallet
 
 

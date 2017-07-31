@@ -5,6 +5,7 @@ import re
 import shutil
 import configparser
 import json
+import time
 
 import requests
 import requests_cache
@@ -169,10 +170,7 @@ def mainc(stdscr):
     stdscr.nodelay(1)
     while inp != 48 and inp != 27 and inp != 81 and inp != 113:
         while True:
-            try:
-                write_scr(stdscr, wallet, y, x)
-            except curses.error:
-                pass
+            write_scr(stdscr, wallet, y, x)
 
             inp = stdscr.getch()
             if inp != curses.KEY_RESIZE:
@@ -192,6 +190,8 @@ def mainc(stdscr):
                     'Enter the symbol of coin to be removed, e.g. BTC')
                 wallet = remove_coin(data, wallet)
 
+        time.sleep(float(config['api'].get('iter_sleep', 0.25)))
+
     write_wallet(wallet)
 
 
@@ -210,4 +210,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    wmain()

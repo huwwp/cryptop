@@ -14,7 +14,7 @@ basedir = os.path.join(os.path.expanduser('~'), '.cryptop')
 datafile = os.path.join(basedir, 'wallet.json')
 conffile = os.path.join(basedir, 'config.ini')
 config = configparser.ConfigParser()
-p = re.compile('[A-Z]{3,4},\d{0,}\.?\d{0,}')
+p = re.compile('[A-Z]{2,5},\d{0,}\.?\d{0,}')
 
 
 def read_configuration(confpath):
@@ -81,10 +81,10 @@ def conf_scr():
 def write_scr(stdscr, wallet, y, x):
 	'''Write text and formatting to screen'''
 	if y >= 1:
-		stdscr.addnstr(0,0,'cryptop v0.1.0', x, curses.color_pair(2))
+		stdscr.addnstr(0,0,'cryptop v0.1.1', x, curses.color_pair(2))
 	if y >= 2:
 		stdscr.addnstr(1,0,
-			'  COIN    PRICE         HELD        VAL     HIGH      LOW  ',
+			'  COIN      PRICE          HELD        VAL     HIGH      LOW  ',
 			x, curses.color_pair(3))
 
 	total = 0
@@ -97,7 +97,7 @@ def write_scr(stdscr, wallet, y, x):
 			for coin,val,held in zip(coinl, coinvl, heldl):
 				if coinl.index(coin)+2 < y:
 					stdscr.addnstr(coinl.index(coin)+2,0,
-						'  {}  {:8.2f} {:12.8f} {:10.2f} {:8.2f} {:8.2f}'
+						'  {:<5}  {:8.2f} {:>13.8f} {:10.2f} {:8.2f} {:8.2f}'
 						.format(coin, val[0], float(held), float(held)*val[0],
 							val[1], val[2]), x, curses.color_pair(2))
 				total += float(held)*val[0]

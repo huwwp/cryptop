@@ -1,9 +1,2 @@
-- handle internet dropping out
-- rewrite readme
-
-****
-EXT
-****
-
 - ux design stuff
 - code readability/best practices cleanup

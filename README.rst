@@ -21,7 +21,7 @@ cryptop can be installed manually, download the repo and run
     sudo python setup.py install
 
 pip and setup.py can be run with a --user flag if you would prefer
-not to sudo.
+not to sudo. Please note cryptop requires Python 3 to run.
 
 Usage
 -----
@@ -61,7 +61,7 @@ would like to support me on my journey here is my address.
 
 BTC: 15wNW29q7XAEbC8yus49CWvt91JkhcdkoW
 
-Disclosure
+Disclaimer
 ----------
 
 I am not liable for the accuracy of this program’s output nor actions

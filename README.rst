@@ -21,7 +21,8 @@ cryptop can be installed manually, download the repo and run
     sudo python setup.py install
 
 pip and setup.py can be run with a --user flag if you would prefer
-not to sudo. Please note cryptop requires Python 3 to run.
+not to sudo. Please note cryptop requires Python 3 to run, and is 
+only tested in Python 3.6 so far.
 
 Usage
 -----
@@ -56,8 +57,7 @@ Uses the `cryptocompare.com API
 Support
 -------
 
-My aim is to become a blockchain developer but I have a long way to go, if you
-would like to support me on my journey here is my address.
+Support cryptop's development here.
 
 BTC: 15wNW29q7XAEbC8yus49CWvt91JkhcdkoW
 

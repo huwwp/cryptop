@@ -32,7 +32,7 @@ def if_coin(coin, url='https://www.cryptocompare.com/api/data/coinlist/'):
 	return coin in requests.get(url).json()['Data']
 
 
-def getPrice(coin, curr=None):
+def get_price(coin, curr=None):
 	'''Get the data on coins'''
 	curr = curr or config['api'].get('currency', 'USD')
 	fmt = 'https://min-api.cryptocompare.com/data/pricemultifull?fsyms={}&tsyms={}'
@@ -79,7 +79,7 @@ def conf_scr():
 def write_scr(stdscr, wallet, y, x):
 	'''Write text and formatting to screen'''
 	if y >= 1:
-		stdscr.addnstr(0, 0,'cryptop v0.1.1', x, curses.color_pair(2))
+		stdscr.addnstr(0, 0,'cryptop v0.1.2', x, curses.color_pair(2))
 	if y >= 2:
 		header = '  COIN      PRICE          HELD        VAL     HIGH      LOW  '
 		stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
@@ -88,7 +88,7 @@ def write_scr(stdscr, wallet, y, x):
 	coinl = list(wallet.keys())
 	heldl = list(wallet.values())
 	if coinl:
-		coinvl = getPrice(','.join(coinl))
+		coinvl = get_price(','.join(coinl))
 
 		if y > 3:
 			for coin,val,held in zip(coinl, coinvl, heldl):
@@ -103,7 +103,7 @@ def write_scr(stdscr, wallet, y, x):
 		stdscr.addnstr(y-2, 0, 'Total Holdings: {:10.2f}    '
 			.format(total), x, curses.color_pair(3))
 		stdscr.addnstr(y-1, 0,
-			'[A] Add coin or update value [R] Remove coin [0]Exit', x,
+			'[A] Add coin or update value [R] Remove coin [0\Q]Exit', x,
 			curses.color_pair(2))
 
 
@@ -112,7 +112,7 @@ def read_wallet():
 	try:
 		with open(datafile, 'r') as f:
 			return json.load(f)
-	except (FileNotFoundError, json.decoder.JSONDecodeError):
+	except (FileNotFoundError, ValueError):
 		# missing or malformed wallet
 		write_wallet({})
 		return {}
@@ -167,7 +167,7 @@ def mainc(stdscr):
 	stdscr.bkgd(' ', curses.color_pair(2))
 	stdscr.clear()
 	stdscr.nodelay(1)
-	while inp != 48 and inp != 27:
+	while inp != 48 and inp != 27 and inp != 81 and inp != 113:
 		while True:
 			try:
 				write_scr(stdscr, wallet, y, x)

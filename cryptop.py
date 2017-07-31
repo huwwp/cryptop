@@ -167,7 +167,7 @@ def mainc(stdscr):
 	stdscr.bkgd(' ', curses.color_pair(2))
 	stdscr.clear()
 	stdscr.nodelay(1)
-	while inp not in (27, 48):
+	while inp != 48 and inp != 27:
 		while True:
 			try:
 				write_scr(stdscr, wallet, y, x)

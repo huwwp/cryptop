@@ -26,15 +26,9 @@ def read_configuration(confpath):
 	config.read(confpath)
 	return config
 
-
-def if_coin(coin):
+def if_coin(coin, url='https://www.cryptocompare.com/api/data/coinlist/'):
 	'''Check if coin exists'''
-	t = requests.get('https://www.cryptocompare.com/api/data/coinlist/')
-	data = t.json()
-	if coin in data['Data'].keys():
-		return True
-	else:
-		return False
+	return coin in requests.get(url).json()['Data']
 
 
 def getPrice(coin, curr=None):

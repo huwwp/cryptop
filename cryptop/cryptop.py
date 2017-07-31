@@ -6,10 +6,13 @@ import shutil
 import configparser
 import json
 import pkg_resources
+import enum
+import threading
+import traceback
+import contextlib
 import time
 
 import requests
-import requests_cache
 
 # GLOBALS!
 BASEDIR = os.path.join(os.path.expanduser('~'), '.cryptop')
@@ -26,6 +29,17 @@ KEY_R = 82
 KEY_a = 97
 KEY_q = 113
 KEY_r = 114
+
+
+class Screen(enum.Enum):
+    Main = 0
+    Add = 1
+    Remove = 2
+
+
+# Currently active screen - used to avoid async screen price updated when not
+# in the main screen.
+active_scr = Screen.Main
 
 
 def read_configuration(confpath):
@@ -59,7 +73,7 @@ def get_price(coin, curr=None):
                 data_raw[c][curr]['HIGH24HOUR'],
                 data_raw[c][curr]['LOW24HOUR']) for c in coin.split(',')]
     except:
-        sys.exit('Could not parse data')
+        sys.exit('Could not parse data:\n%s' % traceback.format_exc())
 
 
 def get_theme_colors():
@@ -79,6 +93,8 @@ def get_theme_colors():
 
 def conf_scr():
     '''Configure the screen and colors/etc'''
+
+    curses.initscr()
     curses.curs_set(0)
     curses.start_color()
     curses.use_default_colors()
@@ -172,54 +188,92 @@ def remove_coin(coin, wallet):
     return wallet
 
 
+update_thread = None
+
+
+def update_scr(stdscr, wallet, y, x):
+    global update_thread
+
+    if active_scr == Screen.Main:
+        write_scr(stdscr, wallet, y, x)
+
+    if update_thread:
+        update_thread.cancel()
+
+    update_time = config['api'].get('update_time', 5)
+    update_thread = threading.Timer(update_time, update_scr, (stdscr, wallet, y, x))
+    update_thread.start()
+
+
+def stop():
+    try:
+        update_thread.cancel()
+    except:
+        pass
+
+
 def mainc(stdscr):
+    global active_scr
+
+    active_scr = Screen.Main
     inp = 0
     wallet = read_wallet()
     y, x = stdscr.getmaxyx()
+
     conf_scr()
     stdscr.bkgd(' ', curses.color_pair(2))
-    stdscr.clear()
-    stdscr.nodelay(1)
-    sleep_time = float(CONFIG['api'].get('iter_sleep', 0.25))
+    update_scr(stdscr, wallet, y, x)
+
+    @contextlib.contextmanager
+    def subscreen(scr_type):
+        global active_scr
+        nonlocal wallet
+
+        active_scr = scr_type
+        yield
+        active_scr = Screen.Main
+        write_wallet(wallet)
 
     while inp not in {KEY_ZERO, KEY_ESCAPE, KEY_Q, KEY_q}:
-        write_scr(stdscr, wallet, y, x)
 
+        stdscr.nodelay(1)
         inp = stdscr.getch()
         if inp == -1:
-            time.sleep(sleep_time)
+            time.sleep(0.1)
+
         if inp == curses.KEY_RESIZE:
             stdscr.erase()
             y, x = stdscr.getmaxyx()
             continue
 
-        if inp in {KEY_a, KEY_A}:
-            if y > 2:
+        if inp in {KEY_a, KEY_A} and y > 2:
+            with subscreen(Screen.Remove):
                 data = get_string(stdscr,
                     'Enter in format Symbol,Amount e.g. BTC,10')
                 wallet = add_coin(data, wallet)
 
-        if inp in {KEY_r, KEY_R}:
-            if y > 2:
+        if inp in {KEY_r, KEY_R} and y > 2:
+            with subscreen(Screen.Remove):
                 data = get_string(stdscr,
                     'Enter the symbol of coin to be removed, e.g. BTC')
                 wallet = remove_coin(data, wallet)
 
-    write_wallet(wallet)
-
 
 def main():
-    if os.path.isfile(BASEDIR):
-        sys.exit('Please remove your old configuration file at {}'.format(BASEDIR))
-    os.makedirs(BASEDIR, exist_ok=True)
+    try:
+        if os.path.isfile(BASEDIR):
+            sys.exit('Please remove your old configuration file at {}'.format(BASEDIR))
+        os.makedirs(BASEDIR, exist_ok=True)
 
-    global CONFIG
-    CONFIG = read_configuration(CONFFILE)
+        global config
+        config = read_configuration(CONFFILE)
 
-    requests_cache.install_cache(cache_name='api_cache', backend='memory',
-        expire_after=int(CONFIG['api'].get('cache', 10)))
+        curses.wrapper(mainc)
+    except KeyboardInterrupt:
+        pass
 
-    curses.wrapper(mainc)
+    stop()
+    return 0
 
 
 if __name__ == "__main__":

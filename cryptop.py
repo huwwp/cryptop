@@ -151,6 +151,7 @@ def get_string(stdscr, prompt):
 
 def add_coin(coin_amount, wallet):
     ''' Remove a coin and its amount to the wallet '''
+    coin_amount = coin_amount.upper()
     if not COIN_FORMAT.match(coin_amount):
         return wallet
 
@@ -164,7 +165,9 @@ def remove_coin(coin, wallet):
     ''' Remove a coin and its amount from the wallet '''
     # coin = '' if window is resized while waiting for string
     if coin:
+        coin = coin.upper()
         wallet.pop(coin, None)
+        return wallet.pop(coin, None)
     return wallet
 
 

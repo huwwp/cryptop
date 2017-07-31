@@ -8,6 +8,8 @@ Built on python and ncurses with simplicity in mind, cryptop updates in realtime
 Installation
 ------------
 
+cryptop requires Python 3 to run, and has only tested in Python 3.6 so far.
+
 The easiest way to install cryptop is through pip
 
 .. code:: bash
@@ -20,9 +22,7 @@ cryptop can be installed manually, download the repo and run
 
     sudo python setup.py install
 
-pip and setup.py can be run with a --user flag if you would prefer
-not to sudo. Please note cryptop requires Python 3 to run, and is 
-only tested in Python 3.6 so far.
+pip and setup.py can be run with a --user flag if you would prefer not to sudo.
 
 Usage
 -----

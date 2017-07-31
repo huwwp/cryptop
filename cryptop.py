@@ -180,14 +180,12 @@ def mainc(stdscr):
 			stdscr.erase()
 			y, x = stdscr.getmaxyx()
 
-		if inp == 97 or inp == 65:
-			if y > 2:
+		if y > 2:
+			if inp in (65, 97):
 				data = get_string(stdscr,
 					'Enter in format Symbol,Amount e.g. BTC,10')
 				wallet = add_coin(data, wallet)
-
-		if inp == 82 or inp == 114:
-			if y > 2:
+			elif inp in (82, 114):
 				data = get_string(stdscr,
 					'Enter the symbol of coin to be removed, e.g. BTC')
 				wallet = remove_coin(data, wallet)

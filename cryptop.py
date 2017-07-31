@@ -10,21 +10,21 @@ import requests
 import requests_cache
 
 # GLOBALS!
-basedir = os.path.join(os.path.expanduser('~'), '.cryptop')
-datafile = os.path.join(basedir, 'wallet.json')
-conffile = os.path.join(basedir, 'config.ini')
-config = configparser.ConfigParser()
-p = re.compile('[A-Z]{2,5},\d{0,}\.?\d{0,}')
+BASEDIR = os.path.join(os.path.expanduser('~'), '.cryptop')
+DATAFILE = os.path.join(BASEDIR, 'wallet.json')
+CONFFILE = os.path.join(BASEDIR, 'config.ini')
+CONFIG = configparser.ConfigParser()
+COIN_FORMAT = re.compile('[A-Z]{2,5},\d{0,}\.?\d{0,}')
 
 
 def read_configuration(confpath):
     # copy our default config file
     if not os.path.isfile(confpath):
         defaultconf = os.path.join(os.path.dirname(__file__), 'config.ini')
-        shutil.copyfile(defaultconf, conffile)
+        shutil.copyfile(defaultconf, CONFFILE)
 
-    config.read(confpath)
-    return config
+    CONFIG.read(confpath)
+    return CONFIG
 
 
 def if_coin(coin, url='https://www.cryptocompare.com/api/data/coinlist/'):
@@ -34,7 +34,7 @@ def if_coin(coin, url='https://www.cryptocompare.com/api/data/coinlist/'):
 
 def get_price(coin, curr=None):
     '''Get the data on coins'''
-    curr = curr or config['api'].get('currency', 'USD')
+    curr = curr or CONFIG['api'].get('currency', 'USD')
     fmt = 'https://min-api.cryptocompare.com/data/pricemultifull?fsyms={}&tsyms={}'
 
     try:
@@ -59,7 +59,7 @@ def get_theme_colors():
         except AttributeError:
             return int(name_or_value)
 
-    theme_config = config['theme']
+    theme_config = CONFIG['theme']
     return (get_curses_color(theme_config.get('text', 'yellow')),
         get_curses_color(theme_config.get('banner', 'yellow')),
         get_curses_color(theme_config.get('banner_text', 'black')),
@@ -110,7 +110,7 @@ def write_scr(stdscr, wallet, y, x):
 def read_wallet():
     ''' Reads the wallet data from its json file '''
     try:
-        with open(datafile, 'r') as f:
+        with open(DATAFILE, 'r') as f:
             return json.load(f)
     except (FileNotFoundError, ValueError):
         # missing or malformed wallet
@@ -120,7 +120,7 @@ def read_wallet():
 
 def write_wallet(wallet):
     ''' Reads the wallet data to its json file '''
-    with open(datafile, 'w') as f:
+    with open(DATAFILE, 'w') as f:
         json.dump(wallet, f)
 
 
@@ -142,7 +142,7 @@ def get_string(stdscr, prompt):
 
 def add_coin(coin_amount, wallet):
     ''' Remove a coin and its amount to the wallet '''
-    if not p.match(coin_amount):
+    if not COIN_FORMAT.match(coin_amount):
         return wallet
 
     coin, amount = coin_amount.split(',')
@@ -196,15 +196,15 @@ def mainc(stdscr):
 
 
 def main():
-    if os.path.isfile(basedir):
-        sys.exit('Please remove your old configuration file at {}'.format(basedir))
-    os.makedirs(basedir, exist_ok=True)
+    if os.path.isfile(BASEDIR):
+        sys.exit('Please remove your old configuration file at {}'.format(BASEDIR))
+    os.makedirs(BASEDIR, exist_ok=True)
 
-    global config
-    config = read_configuration(conffile)
+    global CONFIG
+    CONFIG = read_configuration(CONFFILE)
 
     requests_cache.install_cache(cache_name='api_cache', backend='memory',
-        expire_after=int(config['api'].get('cache', 10)))
+        expire_after=int(CONFIG['api'].get('cache', 10)))
 
     curses.wrapper(mainc)
 

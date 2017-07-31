@@ -171,17 +171,15 @@ def mainc(stdscr):
     sleep_time = float(config['api'].get('iter_sleep', 0.25))
 
     while inp != 48 and inp != 27 and inp != 81 and inp != 113:
-        while True:
-            write_scr(stdscr, wallet, y, x)
+        write_scr(stdscr, wallet, y, x)
 
-            inp = stdscr.getch()
-            if inp == -1:
-                time.sleep(sleep_time)
-            if inp != curses.KEY_RESIZE:
-                break
-
+        inp = stdscr.getch()
+        if inp == -1:
+            time.sleep(sleep_time)
+        if inp == curses.KEY_RESIZE:
             stdscr.erase()
             y, x = stdscr.getmaxyx()
+            continue
 
         if inp == 97 or inp == 65:
             if y > 2:

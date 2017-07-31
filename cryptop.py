@@ -155,7 +155,7 @@ def remove_coin(coin, wallet):
     ''' Remove a coin and its amount from the wallet '''
     # coin = '' if window is resized while waiting for string
     if coin:
-        return wallet.pop(coin, None)
+        wallet.pop(coin, None)
     return wallet
 
 

@@ -168,13 +168,18 @@ def mainc(stdscr):
     stdscr.bkgd(' ', curses.color_pair(2))
     stdscr.clear()
     stdscr.nodelay(1)
+    sleep_time = float(config['api'].get('iter_sleep', 0.25))
+
     while inp != 48 and inp != 27 and inp != 81 and inp != 113:
         while True:
             write_scr(stdscr, wallet, y, x)
 
             inp = stdscr.getch()
+            if inp == -1:
+                time.sleep(sleep_time)
             if inp != curses.KEY_RESIZE:
                 break
+
             stdscr.erase()
             y, x = stdscr.getmaxyx()
 
@@ -189,8 +194,6 @@ def mainc(stdscr):
                 data = get_string(stdscr,
                     'Enter the symbol of coin to be removed, e.g. BTC')
                 wallet = remove_coin(data, wallet)
-
-        time.sleep(float(config['api'].get('iter_sleep', 0.25)))
 
     write_wallet(wallet)
 

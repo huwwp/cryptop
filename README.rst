@@ -15,6 +15,12 @@ The easiest way to install cryptop is through pip
 .. code:: bash
 
     sudo pip install cryptop
+    
+You may need to force pip3 depending on your python install
+
+.. code:: bash
+
+    sudo pip3 install cryptop
 
 cryptop can be installed manually, download the repo and run
 

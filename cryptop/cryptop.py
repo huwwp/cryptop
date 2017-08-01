@@ -183,7 +183,7 @@ def mainc(stdscr):
 
             inp = stdscr.getch()
             if inp != curses.KEY_RESIZE:
-                key_pressed = chr(imp).upper()
+                key_pressed = chr(abs(imp)).upper()  # abs() avoids -1 issue
                 break
             stdscr.erase()
             y, x = stdscr.getmaxyx()

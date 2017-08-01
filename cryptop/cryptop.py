@@ -193,7 +193,7 @@ def mainc(stdscr):
                 data = get_string(stdscr,
                     'Enter in format Symbol,Amount e.g. BTC,10')
                 wallet = add_coin(data, wallet)
-            elif key_pressed =='R':
+            elif key_pressed == 'R':
                 data = get_string(stdscr,
                     'Enter the symbol of coin to be removed, e.g. BTC')
                 wallet = remove_coin(data, wallet)

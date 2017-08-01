@@ -88,7 +88,7 @@ def conf_scr():
 def write_scr(stdscr, wallet, y, x):
     '''Write text and formatting to screen'''
     if y >= 1:
-        stdscr.addnstr(0, 0, 'cryptop v0.1.2', x, curses.color_pair(2))
+        stdscr.addnstr(0, 0, 'cryptop v0.1.3', x, curses.color_pair(2))
     if y >= 2:
         header = '  COIN      PRICE          HELD        VAL     HIGH      LOW  '
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))

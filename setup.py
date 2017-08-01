@@ -8,7 +8,7 @@ with open('README.rst') as f:
 
 setup(
     name='cryptop',
-    version='0.1.2',
+    version='0.1.3',
     description='Command line Cryptocurrency Portfolio',
     long_description=readme,
     author='huwwp',
@@ -21,6 +21,7 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     packages=find_packages(exclude=('tests', 'docs')),
+    include_package_data=True,
     install_requires=['requests', 'requests_cache'],
     py_modules=['cryptop'],
     entry_points = {

@@ -22,7 +22,7 @@ cryptop can be installed manually, download the repo and run
 
     sudo python setup.py install
 
-pip and setup.py can be run with a --user flag if you would prefer not to sudo.
+pip and setup.py can be run with a --user flag if you would prefer not to sudo. Both require setuptools which is included in most python installs and many distros by default
 
 Usage
 -----
@@ -40,7 +40,8 @@ Customisation
 
 Cryptop creates two config files in a .cryptop folder in your home directory.
 
-.crypto/config.ini contains currency and theme configuration (text and backgrounds colors)
+.crypto/config.ini contains theme configuration (text/background colors) and
+options to change the output currency (default USD) and update frequency.
 
 .. image:: img\fall.png
 
@@ -54,10 +55,8 @@ Credits
 Uses the `cryptocompare.com API
 <http://www.cryptocompare.com/>`_.
 
-Support
--------
-
-Support cryptop's development here.
+Tipjar
+------
 
 BTC: 15wNW29q7XAEbC8yus49CWvt91JkhcdkoW
 

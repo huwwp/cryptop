@@ -1,2 +1,1 @@
-- ux design stuff
-- code readability/best practices cleanup
+- handle high value inputs (move decimal point)

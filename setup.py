@@ -20,11 +20,10 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
     ],
-    packages=find_packages(exclude=('tests', 'docs')),
-    include_package_data=True,
+    packages=find_packages(),
     install_requires=['requests', 'requests_cache'],
-    py_modules=['cryptop'],
+    package_data={'cryptop': ['config.ini']},
     entry_points = {
-        'console_scripts': ['cryptop = cryptop:main'],
+        'console_scripts': ['cryptop = cryptop.cryptop:main'],
     }
 )

@@ -5,6 +5,7 @@ import re
 import shutil
 import configparser
 import json
+import pkg_resources
 
 import requests
 import requests_cache
@@ -29,7 +30,7 @@ KEY_r = 114
 def read_configuration(confpath):
     # copy our default config file
     if not os.path.isfile(confpath):
-        defaultconf = os.path.join(os.path.dirname(__file__), 'config.ini')
+        defaultconf = pkg_resources.resource_filename(__name__, 'config.ini')
         shutil.copyfile(defaultconf, CONFFILE)
 
     CONFIG.read(confpath)
@@ -167,7 +168,6 @@ def remove_coin(coin, wallet):
     if coin:
         coin = coin.upper()
         wallet.pop(coin, None)
-        return wallet.pop(coin, None)
     return wallet
 
 

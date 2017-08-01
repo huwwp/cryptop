@@ -16,6 +16,15 @@ conffile = os.path.join(basedir, 'config.ini')
 config = configparser.ConfigParser()
 p = re.compile('[A-Z]{2,5},\d{0,}\.?\d{0,}')
 
+KEY_ESCAPE = 27
+KEY_ZERO = 48
+KEY_A = 65
+KEY_Q = 81
+KEY_R = 82
+KEY_a = 97
+KEY_q = 113
+KEY_r = 114
+
 
 def read_configuration(confpath):
     # copy our default config file
@@ -167,7 +176,8 @@ def mainc(stdscr):
     stdscr.bkgd(' ', curses.color_pair(2))
     stdscr.clear()
     stdscr.nodelay(1)
-    while inp != 48 and inp != 27 and inp != 81 and inp != 113:
+    # while inp != 48 and inp != 27 and inp != 81 and inp != 113:
+    while inp not in {KEY_ZERO, KEY_ESCAPE, KEY_Q, KEY_q}:
         while True:
             try:
                 write_scr(stdscr, wallet, y, x)
@@ -180,13 +190,13 @@ def mainc(stdscr):
             stdscr.erase()
             y, x = stdscr.getmaxyx()
 
-        if inp == 97 or inp == 65:
+        if inp in {KEY_a, KEY_A}:
             if y > 2:
                 data = get_string(stdscr,
                     'Enter in format Symbol,Amount e.g. BTC,10')
                 wallet = add_coin(data, wallet)
 
-        if inp == 82 or inp == 114:
+        if inp in {KEY_r, KEY_R}:
             if y > 2:
                 data = get_string(stdscr,
                     'Enter the symbol of coin to be removed, e.g. BTC')

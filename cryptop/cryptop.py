@@ -84,12 +84,13 @@ def conf_scr():
     text, banner, banner_text, background = get_theme_colors()
     curses.init_pair(2, text, background)
     curses.init_pair(3, banner_text, banner)
+    curses.halfdelay(10)
 
 
 def write_scr(stdscr, wallet, y, x):
     '''Write text and formatting to screen'''
     if y >= 1:
-        stdscr.addnstr(0, 0, 'cryptop v0.1.3', x, curses.color_pair(2))
+        stdscr.addnstr(0, 0, 'cryptop v0.1.5', x, curses.color_pair(2))
     if y >= 2:
         header = '  COIN      PRICE          HELD        VAL     HIGH      LOW  '
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
@@ -136,7 +137,6 @@ def write_wallet(wallet):
 
 def get_string(stdscr, prompt):
     '''Requests and string from the user'''
-    stdscr.nodelay(0)
     curses.echo()
     stdscr.clear()
     stdscr.addnstr(0, 0, prompt, -1, curses.color_pair(2))
@@ -146,7 +146,7 @@ def get_string(stdscr, prompt):
     curses.noecho()
     curses.curs_set(0)
     stdscr.clear()
-    stdscr.nodelay(1)
+    curses.halfdelay(10)
     return in_str
 
 
@@ -178,7 +178,7 @@ def mainc(stdscr):
     conf_scr()
     stdscr.bkgd(' ', curses.color_pair(2))
     stdscr.clear()
-    stdscr.nodelay(1)
+    #stdscr.nodelay(1)
     # while inp != 48 and inp != 27 and inp != 81 and inp != 113:
     while inp not in {KEY_ZERO, KEY_ESCAPE, KEY_Q, KEY_q}:
         while True:

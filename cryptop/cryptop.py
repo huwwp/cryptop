@@ -105,7 +105,7 @@ def write_scr(stdscr, wallet, y, x):
             for coin, val, held in zip(coinl, coinvl, heldl):
                 if coinl.index(coin) + 2 < y:
                     stdscr.addnstr(coinl.index(coin) + 2, 0,
-                        '  {:<5}  {:8.2f} {:>13.8f} {:10.2f} {:8.2f} {:8.2f}'
+                        '  {:<5}  {:8.4f} {:>13.8f} {:10.4f} {:8.4f} {:8.4f}'
                         .format(coin, val[0], float(held), float(held) * val[0],
                             val[1], val[2]), x, curses.color_pair(2))
                 total += float(held) * val[0]

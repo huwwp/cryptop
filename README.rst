@@ -8,7 +8,7 @@ Built on Python 3 and ncurses with simplicity in mind, cryptop updates in realti
 Installation
 ------------
 
-cryptop requires Python 3 to run, and has only tested in Python 3.6 so far.
+cryptop requires Python 3 to run, and has only been tested in Python 3.6 so far.
 
 The easiest way to install cryptop is through pip
 

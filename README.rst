@@ -65,6 +65,7 @@ Tipjar
 ------
 
 Help me reach my goal of becoming a blockchain developer.
+
 BTC: 15wNW29q7XAEbC8yus49CWvt91JkhcdkoW
 
 Disclaimer

@@ -47,7 +47,7 @@ Customisation
 Cryptop creates two config files in a .cryptop folder in your home directory.
 
 .crypto/config.ini contains theme configuration (text/background colors) and
-options to change the output currency (default USD) and update frequency.
+options to change the output currency (default USD), update frequency, number of decimal places to display and maximum width for float values.
 
 .. image:: img\fall.png
 
@@ -64,6 +64,7 @@ Uses the `cryptocompare.com API
 Tipjar
 ------
 
+Help me reach my goal of becoming a blockchain developer.
 BTC: 15wNW29q7XAEbC8yus49CWvt91JkhcdkoW
 
 Disclaimer

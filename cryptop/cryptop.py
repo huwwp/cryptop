@@ -86,15 +86,29 @@ def conf_scr():
     curses.init_pair(3, banner_text, banner)
     curses.halfdelay(10)
 
+def str_formatter(coin, val, held):
+    '''Prepare the coin strings as per ini length/decimal place values'''
+    max_length = CONFIG['theme'].getint('field_length', 13)
+    dec_place = CONFIG['theme'].getint('dec_places', 2)
+    avg_length = CONFIG['theme'].getint('dec_places', 2) + 6
+    held_str = '{:>{}.8f}'.format(float(held), max_length)
+    val_str = '{:>{}.{}f}'.format(float(held) * val[0], max_length, dec_place)
+    return '  {:<5} {:>{}.{}f}  {} {} {:>{}.{}f} {:>{}.{}f}'.format(coin,
+        val[0], avg_length, dec_place, held_str[:max_length],
+        val_str[:max_length], val[1], avg_length, dec_place, val[2], avg_length, dec_place)
 
 def write_scr(stdscr, wallet, y, x):
     '''Write text and formatting to screen'''
-    if y >= 1:
-        stdscr.addnstr(0, 0, 'cryptop v0.1.5', x, curses.color_pair(2))
-    if y >= 2:
-        header = '  COIN      PRICE          HELD        VAL     HIGH      LOW  '
-        stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
+    first_pad = ' ' * (3 + CONFIG['theme'].getint('dec_places', 2))
+    second_pad = ' ' * (CONFIG['theme'].getint('field_length', 13) - 2)
+    third_pad =  ' ' * (CONFIG['theme'].getint('field_length', 13) - 3)
 
+    if y >= 1:
+        stdscr.addnstr(0, 0, 'cryptop v0.1.6', x, curses.color_pair(2))
+    if y >= 2:
+        header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}LOW  '.format(first_pad, second_pad, third_pad, first_pad, first_pad)
+        stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
+    
     total = 0
     coinl = list(wallet.keys())
     heldl = list(wallet.values())
@@ -105,9 +119,7 @@ def write_scr(stdscr, wallet, y, x):
             for coin, val, held in zip(coinl, coinvl, heldl):
                 if coinl.index(coin) + 2 < y:
                     stdscr.addnstr(coinl.index(coin) + 2, 0,
-                        '  {:<5}  {:8.2f} {:>13.8f} {:10.2f} {:8.2f} {:8.2f}'
-                        .format(coin, val[0], float(held), float(held) * val[0],
-                            val[1], val[2]), x, curses.color_pair(2))
+                    str_formatter(coin, val, held), x, curses.color_pair(2))
                 total += float(held) * val[0]
 
     if y > len(coinl) + 3:

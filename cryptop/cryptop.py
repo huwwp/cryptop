@@ -19,12 +19,8 @@ COIN_FORMAT = re.compile('[A-Z]{2,5},\d{0,}\.?\d{0,}')
 
 KEY_ESCAPE = 27
 KEY_ZERO = 48
-KEY_A = 65
 KEY_Q = 81
-KEY_R = 82
-KEY_a = 97
 KEY_q = 113
-KEY_r = 114
 
 
 def read_configuration(confpath):
@@ -167,10 +163,8 @@ def add_coin(coin_amount, wallet):
     coin_amount = coin_amount.upper()
     if not COIN_FORMAT.match(coin_amount):
         return wallet
-
     coin, amount = coin_amount.split(',')
     wallet[coin] = amount
-
     return wallet
 
 
@@ -184,7 +178,7 @@ def remove_coin(coin, wallet):
 
 
 def mainc(stdscr):
-    inp = 0
+    inp = key_pressed = 0
     wallet = read_wallet()
     y, x = stdscr.getmaxyx()
     conf_scr()
@@ -201,22 +195,20 @@ def mainc(stdscr):
 
             inp = stdscr.getch()
             if inp != curses.KEY_RESIZE:
+                key_pressed = chr(abs(imp)).upper()  # abs() avoids -1 issue
                 break
             stdscr.erase()
             y, x = stdscr.getmaxyx()
 
-        if inp in {KEY_a, KEY_A}:
-            if y > 2:
+        if y > 2:
+            if key_pressed == 'A':
                 data = get_string(stdscr,
                     'Enter in format Symbol,Amount e.g. BTC,10')
                 wallet = add_coin(data, wallet)
-
-        if inp in {KEY_r, KEY_R}:
-            if y > 2:
+            elif key_pressed == 'R':
                 data = get_string(stdscr,
                     'Enter the symbol of coin to be removed, e.g. BTC')
                 wallet = remove_coin(data, wallet)
-
     write_wallet(wallet)
 
 

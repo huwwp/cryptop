@@ -1,11 +1,11 @@
+import configparser
 import curses
+import json
 import os
-import sys
+import pkg_resources
 import re
 import shutil
-import configparser
-import json
-import pkg_resources
+import sys
 
 import requests
 import requests_cache
@@ -16,15 +16,7 @@ DATAFILE = os.path.join(BASEDIR, 'wallet.json')
 CONFFILE = os.path.join(BASEDIR, 'config.ini')
 CONFIG = configparser.ConfigParser()
 COIN_FORMAT = re.compile('[A-Z]{2,5},\d{0,}\.?\d{0,}')
-
-KEY_ESCAPE = 27
-KEY_ZERO = 48
-KEY_A = 65
-KEY_Q = 81
-KEY_R = 82
-KEY_a = 97
-KEY_q = 113
-KEY_r = 114
+KEY_ESCAPE = chr(27).upper()
 
 
 def read_configuration(confpath):
@@ -86,6 +78,7 @@ def conf_scr():
     curses.init_pair(3, banner_text, banner)
     curses.halfdelay(10)
 
+
 def str_formatter(coin, val, held):
     '''Prepare the coin strings as per ini length/decimal place values'''
     max_length = CONFIG['theme'].getint('field_length', 13)
@@ -96,6 +89,7 @@ def str_formatter(coin, val, held):
     return '  {:<5} {:>{}.{}f}  {} {} {:>{}.{}f} {:>{}.{}f}'.format(coin,
         val[0], avg_length, dec_place, held_str[:max_length],
         val_str[:max_length], val[1], avg_length, dec_place, val[2], avg_length, dec_place)
+
 
 def write_scr(stdscr, wallet, y, x):
     '''Write text and formatting to screen'''
@@ -184,35 +178,33 @@ def remove_coin(coin, wallet):
 
 
 def mainc(stdscr):
-    inp = 0
     wallet = read_wallet()
     y, x = stdscr.getmaxyx()
     conf_scr()
     stdscr.bkgd(' ', curses.color_pair(2))
     stdscr.clear()
     #stdscr.nodelay(1)
-    # while inp != 48 and inp != 27 and inp != 81 and inp != 113:
-    while inp not in {KEY_ZERO, KEY_ESCAPE, KEY_Q, KEY_q}:
+    key_pressed = ''
+    while key_pressed not in ('0', 'Q', KEY_ESCAPE):
         while True:
             try:
                 write_scr(stdscr, wallet, y, x)
             except curses.error:
                 pass
 
-            inp = stdscr.getch()
-            if inp != curses.KEY_RESIZE:
+            imp = stdscr.getch()
+            if inp not in (curses.KEY_RESIZE, -1): 
+                key_pressed = chr(stdscr.getch()).upper()
                 break
             stdscr.erase()
             y, x = stdscr.getmaxyx()
 
-        if inp in {KEY_a, KEY_A}:
-            if y > 2:
+        if y > 2:
+            if key_pressed == 'A':
                 data = get_string(stdscr,
                     'Enter in format Symbol,Amount e.g. BTC,10')
                 wallet = add_coin(data, wallet)
-
-        if inp in {KEY_r, KEY_R}:
-            if y > 2:
+            elif key_pressed == 'R':
                 data = get_string(stdscr,
                     'Enter the symbol of coin to be removed, e.g. BTC')
                 wallet = remove_coin(data, wallet)
@@ -222,7 +214,8 @@ def mainc(stdscr):
 
 def main():
     if os.path.isfile(BASEDIR):
-        sys.exit('Please remove your old configuration file at {}'.format(BASEDIR))
+        fmt = 'Please remove your old configuration file at {}'
+        sys.exit(fmt.format(BASEDIR))
     os.makedirs(BASEDIR, exist_ok=True)
 
     global CONFIG

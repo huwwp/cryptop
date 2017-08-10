@@ -104,7 +104,7 @@ def write_scr(stdscr, wallet, y, x):
     third_pad =  ' ' * (CONFIG['theme'].getint('field_length', 13) - 3)
 
     if y >= 1:
-        stdscr.addnstr(0, 0, 'cryptop v0.1.6', x, curses.color_pair(2))
+        stdscr.addnstr(0, 0, 'cryptop v0.1.7', x, curses.color_pair(2))
     if y >= 2:
         header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}LOW  '.format(first_pad, second_pad, third_pad, first_pad, first_pad)
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
@@ -210,14 +210,14 @@ def mainc(stdscr):
                 data = get_string(stdscr,
                     'Enter in format Symbol,Amount e.g. BTC,10')
                 wallet = add_coin(data, wallet)
+                write_wallet(wallet)
 
         if inp in {KEY_r, KEY_R}:
             if y > 2:
                 data = get_string(stdscr,
                     'Enter the symbol of coin to be removed, e.g. BTC')
                 wallet = remove_coin(data, wallet)
-
-    write_wallet(wallet)
+                write_wallet(wallet)
 
 
 def main():

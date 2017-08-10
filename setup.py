@@ -3,12 +3,12 @@
 from setuptools import setup, find_packages
 
 
-with open('README.rst') as f:
+with open('README.rst', encoding="utf-8") as f:
     readme = f.read()
 
 setup(
     name='cryptop',
-    version='0.1.6',
+    version='0.1.7',
     description='Command line Cryptocurrency Portfolio',
     long_description=readme,
     author='huwwp',

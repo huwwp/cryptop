@@ -125,7 +125,7 @@ def write_scr(stdscr, wallet, y, x):
                 total += float(held) * val[0]
 
     if y > len(coinl) + 3:
-        stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10.2f}    '
+        stdscr.addnstr(y - 2, 0, 'Total Hodlings: {:10.2f}    '
             .format(total), x, curses.color_pair(3))
         stdscr.addnstr(y - 1, 0,
             '[A] Add coin or update value [R] Remove coin [S] Sort [0\Q]Exit', x,

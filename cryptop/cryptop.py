@@ -22,9 +22,11 @@ KEY_ZERO = 48
 KEY_A = 65
 KEY_Q = 81
 KEY_R = 82
+KEY_S = 83
 KEY_a = 97
 KEY_q = 113
 KEY_r = 114
+KEY_s = 115
 
 
 def read_configuration(confpath):
@@ -104,7 +106,7 @@ def write_scr(stdscr, wallet, y, x):
     third_pad =  ' ' * (CONFIG['theme'].getint('field_length', 13) - 3)
 
     if y >= 1:
-        stdscr.addnstr(0, 0, 'cryptop v0.1.7', x, curses.color_pair(2))
+        stdscr.addnstr(0, 0, 'cryptop v0.1.8', x, curses.color_pair(2))
     if y >= 2:
         header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}LOW  '.format(first_pad, second_pad, third_pad, first_pad, first_pad)
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
@@ -126,7 +128,7 @@ def write_scr(stdscr, wallet, y, x):
         stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10.2f}    '
             .format(total), x, curses.color_pair(3))
         stdscr.addnstr(y - 1, 0,
-            '[A] Add coin or update value [R] Remove coin [0\Q]Exit', x,
+            '[A] Add coin or update value [R] Remove coin [S] Sort [0\Q]Exit', x,
             curses.color_pair(2))
 
 
@@ -169,8 +171,10 @@ def add_coin(coin_amount, wallet):
         return wallet
 
     coin, amount = coin_amount.split(',')
-    wallet[coin] = amount
+    if not if_coin(coin):
+        return wallet
 
+    wallet[coin] = amount
     return wallet
 
 
@@ -182,11 +186,11 @@ def remove_coin(coin, wallet):
         wallet.pop(coin, None)
     return wallet
 
-
 def mainc(stdscr):
     inp = 0
     wallet = read_wallet()
     y, x = stdscr.getmaxyx()
+    order = True
     conf_scr()
     stdscr.bkgd(' ', curses.color_pair(2))
     stdscr.clear()
@@ -217,6 +221,13 @@ def mainc(stdscr):
                 data = get_string(stdscr,
                     'Enter the symbol of coin to be removed, e.g. BTC')
                 wallet = remove_coin(data, wallet)
+                write_wallet(wallet)
+
+        if inp in {KEY_s, KEY_S}:
+            if y > 2:
+                order = not order
+                s = sorted(wallet.items(), key=lambda x: float(x[1]), reverse=order)
+                wallet = dict(s)
                 write_wallet(wallet)
 
 

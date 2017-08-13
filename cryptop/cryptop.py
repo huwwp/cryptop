@@ -93,9 +93,9 @@ def str_formatter(coin, val, held):
     max_length = CONFIG['theme'].getint('field_length', 13)
     dec_place = CONFIG['theme'].getint('dec_places', 2)
     avg_length = CONFIG['theme'].getint('dec_places', 2) + 6
-    held_str = '{:>{}.8f}'.format(float(held), max_length)
-    val_str = '{:>{}.{}f}'.format(float(held) * val[0], max_length, dec_place)
-    return '  {:<5} {:>{}.{}f}  {} {} {:>{}.{}f} {:>{}.{}f}'.format(coin,
+    held_str = '{:>{},.8f}'.format(float(held), max_length)
+    val_str = '{:>{},.{}f}'.format(float(held) * val[0], max_length, dec_place)
+    return '  {:<5} {:>{},.{}f}  {} {} {:>{},.{}f} {:>{},.{}f}'.format(coin,
         val[0], avg_length, dec_place, held_str[:max_length],
         val_str[:max_length], val[1], avg_length, dec_place, val[2], avg_length, dec_place)
 

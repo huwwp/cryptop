@@ -6,6 +6,7 @@ import shutil
 import configparser
 import json
 import pkg_resources
+import locale
 
 import requests
 import requests_cache
@@ -92,16 +93,19 @@ def str_formatter(coin, val, held):
     '''Prepare the coin strings as per ini length/decimal place values'''
     max_length = CONFIG['theme'].getint('field_length', 13)
     dec_place = CONFIG['theme'].getint('dec_places', 2)
-    avg_length = CONFIG['theme'].getint('dec_places', 2) + 6
+    avg_length = CONFIG['theme'].getint('dec_places', 2) + 10
     held_str = '{:>{},.8f}'.format(float(held), max_length)
     val_str = '{:>{},.{}f}'.format(float(held) * val[0], max_length, dec_place)
-    return '  {:<5} {:>{},.{}f}  {} {} {:>{},.{}f} {:>{},.{}f}'.format(coin,
-        val[0], avg_length, dec_place, held_str[:max_length],
-        val_str[:max_length], val[1], avg_length, dec_place, val[2], avg_length, dec_place)
+    return '  {:<5} {:>{}}  {} {:>{}} {:>{}} {:>{}}'.format(coin,
+        locale.currency(val[0], grouping=True)[:max_length], avg_length,
+        held_str[:max_length],
+        locale.currency(float(held) * val[0], grouping=True)[:max_length], avg_length,
+        locale.currency(val[1], grouping=True)[:max_length], avg_length,
+        locale.currency(val[2], grouping=True)[:max_length], avg_length)
 
 def write_scr(stdscr, wallet, y, x):
     '''Write text and formatting to screen'''
-    first_pad = ' ' * (3 + CONFIG['theme'].getint('dec_places', 2))
+    first_pad = '{:>{}}'.format('', CONFIG['theme'].getint('dec_places', 2) + 10 - 3)
     second_pad = ' ' * (CONFIG['theme'].getint('field_length', 13) - 2)
     third_pad =  ' ' * (CONFIG['theme'].getint('field_length', 13) - 3)
 
@@ -125,8 +129,8 @@ def write_scr(stdscr, wallet, y, x):
                 total += float(held) * val[0]
 
     if y > len(coinl) + 3:
-        stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10.2f}    '
-            .format(total), x, curses.color_pair(3))
+        stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10}    '
+            .format(locale.currency(total, grouping=True)), x, curses.color_pair(3))
         stdscr.addnstr(y - 1, 0,
             '[A] Add coin or update value [R] Remove coin [S] Sort [0\Q]Exit', x,
             curses.color_pair(2))
@@ -238,6 +242,7 @@ def main():
 
     global CONFIG
     CONFIG = read_configuration(CONFFILE)
+    locale.setlocale(locale.LC_MONETARY, CONFIG['locale'].get('monetary', ''))
 
     requests_cache.install_cache(cache_name='api_cache', backend='memory',
         expire_after=int(CONFIG['api'].get('cache', 10)))

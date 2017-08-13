@@ -17,17 +17,26 @@ CONFFILE = os.path.join(BASEDIR, 'config.ini')
 CONFIG = configparser.ConfigParser()
 COIN_FORMAT = re.compile('[A-Z]{2,5},\d{0,}\.?\d{0,}')
 
+SORT_FNS = { 'coin' : lambda item: item[0],
+             'price': lambda item: float(item[1][0]),
+             'held' : lambda item: float(item[2]),
+             'val'  : lambda item: float(item[1][0]) * float(item[2]) }
+SORTS = list(SORT_FNS.keys())
+COLUMN = SORTS.index('val')
+ORDER = True
+
 KEY_ESCAPE = 27
 KEY_ZERO = 48
 KEY_A = 65
 KEY_Q = 81
 KEY_R = 82
 KEY_S = 83
+KEY_C = 67
 KEY_a = 97
 KEY_q = 113
 KEY_r = 114
 KEY_s = 115
-
+KEY_c = 99
 
 def read_configuration(confpath):
     # copy our default config file
@@ -118,6 +127,10 @@ def write_scr(stdscr, wallet, y, x):
         coinvl = get_price(','.join(coinl))
 
         if y > 3:
+            s = sorted(list(zip(coinl, coinvl, heldl)), key=SORT_FNS[SORTS[COLUMN]], reverse=ORDER)
+            coinl = list(x[0] for x in s)
+            coinvl = list(x[1] for x in s)
+            heldl = list(x[2] for x in s)
             for coin, val, held in zip(coinl, coinvl, heldl):
                 if coinl.index(coin) + 2 < y:
                     stdscr.addnstr(coinl.index(coin) + 2, 0,
@@ -128,7 +141,7 @@ def write_scr(stdscr, wallet, y, x):
         stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10.2f}    '
             .format(total), x, curses.color_pair(3))
         stdscr.addnstr(y - 1, 0,
-            '[A] Add coin or update value [R] Remove coin [S] Sort [0\Q]Exit', x,
+            '[A] Add coin or update value [R] Remove coin [S] Sort [C] Cycle sort column [0\Q]Exit', x,
             curses.color_pair(2))
 
 
@@ -190,7 +203,6 @@ def mainc(stdscr):
     inp = 0
     wallet = read_wallet()
     y, x = stdscr.getmaxyx()
-    order = True
     conf_scr()
     stdscr.bkgd(' ', curses.color_pair(2))
     stdscr.clear()
@@ -225,11 +237,13 @@ def mainc(stdscr):
 
         if inp in {KEY_s, KEY_S}:
             if y > 2:
-                order = not order
-                s = sorted(wallet.items(), key=lambda x: float(x[1]), reverse=order)
-                wallet = dict(s)
-                write_wallet(wallet)
+                global ORDER
+                ORDER = not ORDER
 
+        if inp in {KEY_c, KEY_C}:
+            if y > 2:
+                global COLUMN
+                COLUMN = (COLUMN + 1) % len(SORTS)
 
 def main():
     if os.path.isfile(BASEDIR):

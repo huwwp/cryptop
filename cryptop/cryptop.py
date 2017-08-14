@@ -119,7 +119,7 @@ def write_scr(stdscr, wallet, y, x):
     third_pad =  ' ' * (CONFIG['theme'].getint('field_length', 13) - 3)
 
     if y >= 1:
-        stdscr.addnstr(0, 0, 'cryptop v0.1.8', x, curses.color_pair(2))
+        stdscr.addnstr(0, 0, 'cryptop v0.1.9', x, curses.color_pair(2))
     if y >= 2:
         header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}LOW  '.format(first_pad, second_pad, third_pad, first_pad, first_pad)
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
@@ -145,7 +145,7 @@ def write_scr(stdscr, wallet, y, x):
         stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10}    '
             .format(locale.currency(total, grouping=True)), x, curses.color_pair(3))
         stdscr.addnstr(y - 1, 0,
-            '[A] Add/update [R] Remove [S] Sort [C] Cycle sort [0\Q]Exit', x,
+            '[A] Add/update coin [R] Remove coin [S] Sort [C] Cycle sort [0\Q]Exit', x,
             curses.color_pair(2))
 
 

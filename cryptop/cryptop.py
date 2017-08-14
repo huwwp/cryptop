@@ -141,7 +141,7 @@ def write_scr(stdscr, wallet, y, x):
         stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10.2f}    '
             .format(total), x, curses.color_pair(3))
         stdscr.addnstr(y - 1, 0,
-            '[A] Add coin or update value [R] Remove coin [S] Sort [C] Cycle sort column [0\Q]Exit', x,
+            '[A] Add/update [R] Remove [S] Sort [C] Cycle sort [0\Q]Exit', x,
             curses.color_pair(2))
 
 

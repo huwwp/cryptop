@@ -15,7 +15,7 @@ The easiest way to install cryptop is through pip
 .. code:: bash
 
     sudo pip install cryptop
-    
+
 You may need to force pip3 depending on your python install
 
 .. code:: bash
@@ -54,6 +54,32 @@ options to change the output currency (default USD), update frequency, number of
 .. image:: img\aesth.png
 
 .cryptop/wallet.json contains the coins and amounts you hold, you shouldn't need to edit it manually
+
+Exchange support
+----------------
+
+You can also automatically fetch balances from your exchange accounts.
+Currently the supported exchanges are Bitfinex, Bittrex and Poloniex.
+You will have to get your personal api-keys from the respective exchanges.
+Simply add your api keys to config.ini to enable exchange balance synching:
+
+.. code:: ini
+
+    [bitfinex]
+    key=my-key
+    secret=my-secret
+
+    [bittrex]
+    key=my-key
+    secret=my-secret
+
+    [poloniex]
+    key=my-key
+    secret=my-secret
+
+You can add all or just a selection of supported exchanges. Your manually added balances that are stored
+in wallet.json are not affected by this feature. This allows you to manually maintain your offline wallet balances
+while cryptop shows you the full balances (wallet.json + balances from exchanges).
 
 Credits
 -------

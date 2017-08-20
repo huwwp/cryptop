@@ -11,6 +11,7 @@ import locale
 import time
 import hmac
 import hashlib
+import threading
 from urllib.parse import urlencode
 
 import requests
@@ -30,6 +31,9 @@ SORT_FNS = { 'coin' : lambda item: item[0],
 SORTS = list(SORT_FNS.keys())
 COLUMN = SORTS.index('val')
 ORDER = True
+
+# will be updated with wallet + exchange balances
+FULL_PORTFOLIO = None
 
 KEY_ESCAPE = 27
 KEY_ZERO = 48
@@ -135,7 +139,7 @@ def bitfinex():
     payload = {"X-BFX-APIKEY": key, "X-BFX-SIGNATURE": signature, "X-BFX-PAYLOAD": encoded_msg}
 
     try:
-        resp = requests.post(url, headers=payload)
+        resp = requests.post(url, headers=payload, timeout=5)
 
         for entry in resp.json():
 
@@ -144,8 +148,8 @@ def bitfinex():
 
             if amount != 0 and if_coin(currency):
                 currency_balances[currency] = amount
-    except Exception as e:
-        print(e)
+    except Exception:
+        pass
 
     return currency_balances
 
@@ -167,7 +171,7 @@ def bittrex():
     headers = dict(apisign=sig.hexdigest())
 
     try:
-        resp = requests.get(url, headers=headers)
+        resp = requests.get(url, headers=headers, timeout=5)
         for entry in resp.json()['result']:
 
             currency = entry['Currency'].upper()
@@ -177,8 +181,8 @@ def bittrex():
 
             if amount != 0 and if_coin(currency):
                 currency_balances[currency] = amount
-    except Exception as e:
-        print(e)
+    except Exception:
+        pass
 
     return currency_balances
 
@@ -197,6 +201,7 @@ def poloniex():
         'Sign': sign.hexdigest(),
         'Key': key
     }
+    payload['timeout'] = 5
 
     try:
         resp = requests.post(**payload)
@@ -209,13 +214,15 @@ def poloniex():
             if amount != 0 and if_coin(currency):
                 currency_balances[currency] = amount
     except Exception as e:
-        print(e)
+        pass
 
     return currency_balances
 
 
-def add_exchange_balances(wallet):
+def update_full_portfolio(wallet):
     '''Create a new wallet with balances added from exchanges'''
+
+    global FULL_PORTFOLIO
 
     exchanges = ('bitfinex', 'bittrex', 'poloniex')
     apis = []
@@ -239,8 +246,7 @@ def add_exchange_balances(wallet):
 
     # convert back to string values
     total_balances = {cb[0]: str(cb[1]) for cb in total_balances.items()}
-
-    return total_balances
+    FULL_PORTFOLIO = total_balances
 
 
 def write_scr(stdscr, wallet, y, x):
@@ -282,9 +288,12 @@ def write_scr(stdscr, wallet, y, x):
 
 def read_wallet():
     ''' Reads the wallet data from its json file '''
+    global FULL_PORTFOLIO
     try:
         with open(DATAFILE, 'r') as f:
-            return json.load(f)
+            wallet = json.load(f)
+            FULL_PORTFOLIO = wallet.copy()
+            return wallet
     except (FileNotFoundError, ValueError):
         # missing or malformed wallet
         write_wallet({})
@@ -336,26 +345,26 @@ def remove_coin(coin, wallet):
 
 
 def mainc(stdscr):
+
+    global FULL_PORTFOLIO
     inp = 0
     wallet = read_wallet()
     y, x = stdscr.getmaxyx()
     conf_scr()
     stdscr.bkgd(' ', curses.color_pair(2))
-    stdscr.clear()
-    #stdscr.nodelay(1)
-    # while inp != 48 and inp != 27 and inp != 81 and inp != 113:
-
     c = 0
-    while inp not in {KEY_ZERO, KEY_ESCAPE, KEY_Q, KEY_q}:
 
-        # update exchange data every 10 cycles
-        if not c % 10:
-            full_portfolio = add_exchange_balances(wallet)
+    while inp not in {KEY_ZERO, KEY_ESCAPE, KEY_Q, KEY_q}:
+        stdscr.clear()
+
+        if c % 100 == 0:
+            t = threading.Thread(target=update_full_portfolio, args=(wallet,))
+            t.start()
         c += 1
 
         while True:
             try:
-                write_scr(stdscr, full_portfolio, y, x)
+                write_scr(stdscr, FULL_PORTFOLIO, y, x)
             except curses.error:
                 pass
 

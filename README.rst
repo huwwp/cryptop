@@ -59,7 +59,7 @@ Exchange support
 ----------------
 
 You can also automatically fetch balances from your exchange accounts.
-Currently the supported exchanges are Bitfinex, Bittrex and Poloniex.
+Currently the supported exchanges are Bitfinex, Bittrex, Cryptopia and Poloniex.
 You will have to get your personal api-keys from the respective exchanges.
 Simply add your api keys to config.ini to enable exchange balance synching:
 
@@ -70,6 +70,10 @@ Simply add your api keys to config.ini to enable exchange balance synching:
     secret=my-secret
 
     [bittrex]
+    key=my-key
+    secret=my-secret
+
+    [cryptopia]
     key=my-key
     secret=my-secret
 

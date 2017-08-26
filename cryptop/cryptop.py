@@ -12,7 +12,7 @@ import time
 import hmac
 import hashlib
 import threading
-from urllib.parse import urlencode
+from urllib.parse import urlencode, quote_plus
 
 import requests
 import requests_cache
@@ -187,6 +187,46 @@ def bittrex():
     return currency_balances
 
 
+def cryptopia():
+    '''Collect balances from cryptopia exchange'''
+
+    key = CONFIG['cryptopia'].get('key')
+    secret = CONFIG['cryptopia'].get('secret')
+    currency_balances = {}
+    url = 'https://www.cryptopia.co.nz/api/GetBalance/'
+    nonce = str(time.time())
+    m = hashlib.md5()
+    data = {}
+    post_data = json.dumps(data)
+    m.update(post_data.encode('utf-8'))
+    content_b64 = base64.b64encode(m.digest()).decode('utf-8')
+    sig_data = key + 'POST' + quote_plus(url).lower() + nonce + content_b64
+    sig = base64.b64encode(
+        hmac.new(
+            base64.b64decode(secret),
+            sig_data.encode('utf-8'),
+            hashlib.sha256
+        ).digest()
+    )
+
+    auth = "amx " + key + ":" + sig.decode('utf-8') + ":" + nonce
+    headers = {'Authorization': auth, 'Content-Type': 'application/json; charset=utf-8'}
+    try:
+        resp = requests.post(url, data=json.dumps(data), headers=headers, timeout=5)
+        resp.encoding = "utf-8-sig"
+        result = resp.json()
+        for entry in result['Data']:
+            currency = entry['Symbol']
+            amount = float(entry['Total'])
+            if amount != 0:
+                if if_coin(currency):
+                    currency_balances[currency] = amount
+    except Exception:
+        pass
+
+    return currency_balances
+
+
 def poloniex():
     '''Collect balances from poloniex exchange'''
 
@@ -224,7 +264,7 @@ def update_full_portfolio(wallet):
 
     global FULL_PORTFOLIO
 
-    exchanges = ('bitfinex', 'bittrex', 'poloniex')
+    exchanges = ('bitfinex', 'bittrex', 'cryptopia', 'poloniex')
     apis = []
 
     for exchange in exchanges:

@@ -7,13 +7,14 @@ import configparser
 import json
 import pkg_resources
 import locale
-
+import datetime
 import requests
 import requests_cache
 
 # GLOBALS!
 BASEDIR = os.path.join(os.path.expanduser('~'), '.cryptop')
-DATAFILE = os.path.join(BASEDIR, 'wallet.json')
+WALLETFILE = os.path.join(BASEDIR, 'wallet.json')
+LEDGERFILE = os.path.join(BASEDIR, 'ledger.json')
 CONFFILE = os.path.join(BASEDIR, 'config.ini')
 CONFIG = configparser.ConfigParser()
 COIN_FORMAT = re.compile('[A-Z]{2,5},\d{0,}\.?\d{0,}')
@@ -36,12 +37,14 @@ KEY_Q = 81
 KEY_R = 82
 KEY_S = 83
 KEY_C = 67
+KEY_T = 84
 KEY_a = 97
 KEY_f = 102
 KEY_q = 113
 KEY_r = 114
 KEY_s = 115
 KEY_c = 99
+KEY_t = 116
 
 def read_configuration(confpath):
     # copy our default config file
@@ -151,25 +154,39 @@ def write_scr(stdscr, wallet, y, x):
         stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10}    '
             .format(locale.currency(total, grouping=True)), x, curses.color_pair(3))
         stdscr.addnstr(y - 1, 0,
-            '[A] Add coin [R] Remove coin [F] EUR/ETH [S] Sort [C] Cycle sort [Q] Exit', x,
+            '[A] Add coin [R] Remove coin [T] Add transaction [F] EUR/ETH [S] Sort [C] Cycle sort [Q] Exit', x,
             curses.color_pair(2))
 
 
 def read_wallet():
     ''' Reads the wallet data from its json file '''
     try:
-        with open(DATAFILE, 'r') as f:
+        with open(WALLETFILE, 'r') as f:
             return json.load(f)
     except (FileNotFoundError, ValueError):
         # missing or malformed wallet
         write_wallet({})
         return {}
 
+def read_ledger():
+    ''' Reads the transaction ledger data from its json file '''
+    try:
+        with open(LEDGERFILE, 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, ValueError):
+        # missing or malformed wallet
+        write_ledger({})
+        return {}
 
 def write_wallet(wallet):
-    ''' Reads the wallet data to its json file '''
-    with open(DATAFILE, 'w') as f:
+    ''' Writes the wallet data to its json file '''
+    with open(WALLETFILE, 'w') as f:
         json.dump(wallet, f)
+
+def write_ledger(ledger):
+    ''' Writes the ledger data to its json file '''
+    with open(LEDGERFILE, 'w') as f:
+        json.dump(ledger, f)
 
 
 def get_string(stdscr, prompt):
@@ -188,7 +205,7 @@ def get_string(stdscr, prompt):
 
 
 def add_coin(coin_amount, wallet):
-    ''' Remove a coin and its amount to the wallet '''
+    ''' Add a coin and its amount to the wallet '''
     coin_amount = coin_amount.upper()
     if not COIN_FORMAT.match(coin_amount):
         return wallet
@@ -199,6 +216,29 @@ def add_coin(coin_amount, wallet):
 
     wallet[coin] = amount
     return wallet
+
+def add_transaction(transaction, wallet, ledger):
+    ''' Add a transaction to ledger and update wallet accordingly '''
+
+    transaction = transaction.upper()
+    if not COIN_FORMAT.match(transaction):
+        return wallet, ledger
+
+    coin_out, amount_out, coin_in, amount_in = transaction.split(',')
+    if (not if_coin(coin_out)) or (not if_coin(coin_out)):
+        return wallet, ledger
+
+    # Add transaction to ledger
+    now = datetime.datetime.now()
+    ledger[now.strftime("%Y-%m-%d %H:%M")] = transaction
+
+    # Update wallet 
+    current_amount_coin_out = float(wallet[coin_out])
+    current_amount_coin_in = float(wallet[coin_in])
+    wallet[coin_out] = current_amount_coin_out - float(amount_out)
+    wallet[coin_in] = current_amount_coin_in + float(amount_in)
+
+    return wallet, ledger
 
 
 def remove_coin(coin, wallet):
@@ -212,6 +252,7 @@ def remove_coin(coin, wallet):
 def mainc(stdscr):
     inp = 0
     wallet = read_wallet()
+    ledger = read_ledger()
     y, x = stdscr.getmaxyx()
     conf_scr()
     stdscr.bkgd(' ', curses.color_pair(2))
@@ -262,6 +303,14 @@ def mainc(stdscr):
                     CURRENCY = 'ETH'
                 elif CURRENCY is 'ETH':
                     CURRENCY = 'EUR'
+
+        if inp in {KEY_t, KEY_T}:
+            if y > 2:
+                data = get_string(stdscr,
+                    'Enter transaction: BTC,10,ETH,10')
+                wallet, ledger = add_transaction(data, wallet, ledger)
+                write_wallet(wallet)
+                write_ledger(ledger)
                     
 
 def main():

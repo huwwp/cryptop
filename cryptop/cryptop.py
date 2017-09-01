@@ -26,14 +26,18 @@ SORTS = list(SORT_FNS.keys())
 COLUMN = SORTS.index('val')
 ORDER = True
 
+CURRENCY = 'EUR'
+
 KEY_ESCAPE = 27
 KEY_ZERO = 48
 KEY_A = 65
+KEY_F = 70
 KEY_Q = 81
 KEY_R = 82
 KEY_S = 83
 KEY_C = 67
 KEY_a = 97
+KEY_f = 102
 KEY_q = 113
 KEY_r = 114
 KEY_s = 115
@@ -56,7 +60,9 @@ def if_coin(coin, url='https://www.cryptocompare.com/api/data/coinlist/'):
 
 def get_price(coin, curr=None):
     '''Get the data on coins'''
-    curr = curr or CONFIG['api'].get('currency', 'USD')
+    # curr = curr or CONFIG['api'].get('currency', 'USD')
+    global CURRENCY
+    curr = CURRENCY
     fmt = 'https://min-api.cryptocompare.com/data/pricemultifull?fsyms={}&tsyms={}'
 
     try:
@@ -68,7 +74,7 @@ def get_price(coin, curr=None):
         data_raw = r.json()['RAW']
         return [(data_raw[c][curr]['PRICE'],
                 data_raw[c][curr]['HIGH24HOUR'],
-                data_raw[c][curr]['LOW24HOUR']) for c in coin.split(',')]
+                data_raw[c][curr]['CHANGEPCT24HOUR']) for c in coin.split(',')]
     except:
         sys.exit('Could not parse data')
 
@@ -121,7 +127,7 @@ def write_scr(stdscr, wallet, y, x):
     if y >= 1:
         stdscr.addnstr(0, 0, 'cryptop v0.1.9', x, curses.color_pair(2))
     if y >= 2:
-        header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}LOW  '.format(first_pad, second_pad, third_pad, first_pad, first_pad)
+        header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}24H CHANGE  '.format(first_pad, second_pad, third_pad, first_pad, first_pad)
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
     
     total = 0
@@ -145,7 +151,7 @@ def write_scr(stdscr, wallet, y, x):
         stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10}    '
             .format(locale.currency(total, grouping=True)), x, curses.color_pair(3))
         stdscr.addnstr(y - 1, 0,
-            '[A] Add/update coin [R] Remove coin [S] Sort [C] Cycle sort [0\Q]Exit', x,
+            '[A] Add coin [R] Remove coin [F] EUR/ETH [S] Sort [C] Cycle sort [Q] Exit', x,
             curses.color_pair(2))
 
 
@@ -249,6 +255,15 @@ def mainc(stdscr):
                 global COLUMN
                 COLUMN = (COLUMN + 1) % len(SORTS)
 
+        if inp in {KEY_f, KEY_F}:
+            if y > 2:
+                global CURRENCY
+                if CURRENCY is 'EUR':
+                    CURRENCY = 'ETH'
+                elif CURRENCY is 'ETH':
+                    CURRENCY = 'EUR'
+                    
+
 def main():
     if os.path.isfile(BASEDIR):
         sys.exit('Please remove your old configuration file at {}'.format(BASEDIR))
@@ -256,7 +271,8 @@ def main():
 
     global CONFIG
     CONFIG = read_configuration(CONFFILE)
-    locale.setlocale(locale.LC_MONETARY, CONFIG['locale'].get('monetary', ''))
+    # locale.setlocale(locale.LC_MONETARY, CONFIG['locale'].get('monetary', ''))
+    locale.setlocale(locale.LC_ALL, 'en_US')
 
     requests_cache.install_cache(cache_name='api_cache', backend='memory',
         expire_after=int(CONFIG['api'].get('cache', 10)))

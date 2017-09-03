@@ -126,7 +126,7 @@ def conf_scr():
 def str_formatter(coin, val, held):
     '''Prepare the coin strings as per ini length/decimal place values'''
     global SYMBOL
-    return '{:<5} {:>15.2f} {:>15.{prec}f} {} {:>15.{prec}f} {} {:>15.{prec}f} {} {:>15.{prec}f} {}'.format(
+    return '{:<5} {:>15.2f} {:>17.{prec}f} {} {:>17.{prec}f} {} {:>17.{prec}f} {} {:>17.{prec}f} {}'.format(
         coin, float(held), val[0], SYMBOL, float(held)*val[0], 
         SYMBOL, val[1], SYMBOL, val[2], SYMBOL, prec=NROFDECIMALS)
 

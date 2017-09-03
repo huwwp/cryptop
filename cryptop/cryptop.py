@@ -38,6 +38,7 @@ KEY_R = 82
 KEY_S = 83
 KEY_C = 67
 KEY_T = 84
+KEY_V = 86
 KEY_a = 97
 KEY_f = 102
 KEY_q = 113
@@ -45,6 +46,12 @@ KEY_r = 114
 KEY_s = 115
 KEY_c = 99
 KEY_t = 116
+KEY_v = 118
+
+CURRENCIES = {'USD': '$', 'AUD': '$', 'EUR': '€'}
+print(CURRENCIES[CURRENCY])
+
+
 
 def read_configuration(confpath):
     # copy our default config file
@@ -76,6 +83,7 @@ def get_price(coin, curr=None):
     try:
         data_raw = r.json()['RAW']
         return [(data_raw[c][curr]['PRICE'],
+                data_raw[c][curr]['LOW24HOUR'],
                 data_raw[c][curr]['HIGH24HOUR'],
                 data_raw[c][curr]['CHANGEPCT24HOUR']) for c in coin.split(',')]
     except:
@@ -105,21 +113,29 @@ def conf_scr():
     text, banner, banner_text, background = get_theme_colors()
     curses.init_pair(2, text, background)
     curses.init_pair(3, banner_text, banner)
+    curses.init_pair(4, getattr(curses, 'COLOR_GREEN'), -1)
+    curses.init_pair(5, getattr(curses, 'COLOR_RED'), -1)
     curses.halfdelay(10)
+
+# def str_formatter(coin, val, held):
+#     '''Prepare the coin strings as per ini length/decimal place values'''
+#     max_length = CONFIG['theme'].getint('field_length', 13)
+#     dec_place = CONFIG['theme'].getint('dec_places', 2)
+#     avg_length = CONFIG['theme'].getint('dec_places', 2) + 10
+#     held_str = '{:>{},.8f}'.format(float(held), max_length)
+#     # val_str = '{:>{},.{}f}'.format(float(held) * val[0], max_length, dec_place)
+#     return '  {:<5} {:>{}}  {} {:>{}} {:>{}} {:>{}}'.format(coin,
+#         locale.currency(val[0], grouping=True)[:max_length], avg_length,
+#         held_str[:max_length],
+#         locale.currency(float(held) * val[0], grouping=True)[:max_length], avg_length,
+#         locale.currency(val[1], grouping=True)[:max_length], avg_length,
+#         locale.currency(val[2], grouping=True)[:max_length], avg_length)
 
 def str_formatter(coin, val, held):
     '''Prepare the coin strings as per ini length/decimal place values'''
-    max_length = CONFIG['theme'].getint('field_length', 13)
-    dec_place = CONFIG['theme'].getint('dec_places', 2)
-    avg_length = CONFIG['theme'].getint('dec_places', 2) + 10
-    held_str = '{:>{},.8f}'.format(float(held), max_length)
-    val_str = '{:>{},.{}f}'.format(float(held) * val[0], max_length, dec_place)
-    return '  {:<5} {:>{}}  {} {:>{}} {:>{}} {:>{}}'.format(coin,
-        locale.currency(val[0], grouping=True)[:max_length], avg_length,
-        held_str[:max_length],
-        locale.currency(float(held) * val[0], grouping=True)[:max_length], avg_length,
-        locale.currency(val[1], grouping=True)[:max_length], avg_length,
-        locale.currency(val[2], grouping=True)[:max_length], avg_length)
+    return '{:<5} {:>15.2f} {:>15.2f} {:>15.2f} {:>15.2f} {:>15.2f}'.format(
+        coin, float(held), val[0], float(held)*val[0], val[1], val[2])
+
 
 def write_scr(stdscr, wallet, y, x):
     '''Write text and formatting to screen'''
@@ -127,10 +143,16 @@ def write_scr(stdscr, wallet, y, x):
     second_pad = ' ' * (CONFIG['theme'].getint('field_length', 13) - 2)
     third_pad =  ' ' * (CONFIG['theme'].getint('field_length', 13) - 3)
 
+    first_pad = ' ' * 5
+    second_pad = ' ' * 5
+    first_pad = ' ' * 5
+
     if y >= 1:
         stdscr.addnstr(0, 0, 'cryptop v0.1.9', x, curses.color_pair(2))
     if y >= 2:
-        header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}24H CHANGE  '.format(first_pad, second_pad, third_pad, first_pad, first_pad)
+        # header = 'COIN{}HODLING{}CURRENT PRICE{}TOTAL VALUE{}24H LOW{}24H HIGH{}24H CHANGE  '.format(
+        #     first_pad, second_pad, second_pad, second_pad, second_pad, second_pad, second_pad)
+        header = '{:<5} {:>15} {:>15} {:>15} {:>15} {:>15} {:>15}'.format('COIN', 'HODLING', 'CURRENT PRICE', 'TOTAL VALUE', '24H LOW', '24H HIGH', '24H CHANGE')
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
     
     total = 0
@@ -146,8 +168,16 @@ def write_scr(stdscr, wallet, y, x):
             heldl = list(x[2] for x in s)
             for coin, val, held in zip(coinl, coinvl, heldl):
                 if coinl.index(coin) + 2 < y:
-                    stdscr.addnstr(coinl.index(coin) + 2, 0,
-                    str_formatter(coin, val, held), x, curses.color_pair(2))
+                    stdscr.addnstr(coinl.index(coin) + 2, 0, str_formatter(coin, val, held), x, curses.color_pair(2))
+                    if val[3] > 0:
+                        stdscr.addnstr(coinl.index(coin) + 2, 5 + 5 * 16, 
+                        '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(4))
+                    elif val[3] < 0:
+                        stdscr.addnstr(coinl.index(coin) + 2, 5 + 5 * 16, 
+                        '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(5))
+                    else:
+                        stdscr.addnstr(coinl.index(coin) + 2, 5 + 5 * 16, 
+                        '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(2))
                 total += float(held) * val[0]
 
     if y > len(coinl) + 3:
@@ -249,6 +279,29 @@ def remove_coin(coin, wallet):
         wallet.pop(coin, None)
     return wallet
 
+# def view_ledger(stdscr, ledger, x, y):
+#     '''Write transactions to screen'''
+#     first_pad = '{:>{}}'.format('', CONFIG['theme'].getint('dec_places', 2) + 10 - 3)
+#     second_pad = ' ' * (CONFIG['theme'].getint('field_length', 13) - 2)
+#     third_pad =  ' ' * (CONFIG['theme'].getint('field_length', 13) - 3)
+
+#     if y >= 1:
+#         stdscr.addnstr(0, 0, 'cryptop v0.1.9', x, curses.color_pair(2))
+#     if y >= 2:
+#         header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}24H CHANGE  '.format(
+#             first_pad, second_pad, third_pad, first_pad, first_pad)
+#         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
+    
+    
+#     dates = list(ledger.keys())
+#     transactions = list(ledger.values())
+#     if transactions:
+
+#         if y > 3:
+#             for date, transaction in zip(dates, transactions):
+#                 stdscr.addnstr(dates.index(date) + 2, 0, date + transaction, x, curses.color_pair(2))
+
+
 def mainc(stdscr):
     inp = 0
     wallet = read_wallet()
@@ -311,6 +364,10 @@ def mainc(stdscr):
                 wallet, ledger = add_transaction(data, wallet, ledger)
                 write_wallet(wallet)
                 write_ledger(ledger)
+
+        if inp in {KEY_v, KEY_V}:
+            if y > 2:
+                view_ledger(stdscr, ledger, x, y)
                     
 
 def main():

@@ -31,6 +31,8 @@ ORDER = True
 VIEW = 'WALLET'
 FIAT = 'EUR'
 CURRENCYLIST = [FIAT, 'ETH', 'BTC']
+SYMBOL = '€'
+SYMBOLLIST = ['€','Ξ','Ƀ']
 CURRENCYCOUNTER = 0
 CURRENCY = FIAT
 NROFDECIMALS = 2
@@ -123,8 +125,10 @@ def conf_scr():
 
 def str_formatter(coin, val, held):
     '''Prepare the coin strings as per ini length/decimal place values'''
+    global SYMBOL
     return '{:<5} {:>15.2f} {:>15.{prec}f} {} {:>15.{prec}f} {} {:>15.{prec}f} {} {:>15.{prec}f} {}'.format(
-        coin, float(held), val[0], CURRENCY, float(held)*val[0], CURRENCY, val[1], CURRENCY, val[2], CURRENCY, prec=NROFDECIMALS)
+        coin, float(held), val[0], SYMBOL, float(held)*val[0], 
+        SYMBOL, val[1], SYMBOL, val[2], SYMBOL, prec=NROFDECIMALS)
 
 
 def write_scr(stdscr, wallet, y, x):
@@ -351,9 +355,10 @@ def mainc(stdscr):
 
         if inp in {KEY_f, KEY_F}:
             if y > 2:
-                global CURRENCY, NROFDECIMALS, FIAT, CURRENCYCOUNTER, CURRENCYLIST
+                global CURRENCY, NROFDECIMALS, FIAT, CURRENCYCOUNTER, CURRENCYLIST, SYMBOL, SYMBOLLIST
                 CURRENCYCOUNTER = (CURRENCYCOUNTER + 1) % 3
                 CURRENCY = CURRENCYLIST[CURRENCYCOUNTER]
+                SYMBOL = SYMBOLLIST[CURRENCYCOUNTER]
                 
                 if CURRENCY is FIAT:
                     NROFDECIMALS = 2
@@ -382,8 +387,18 @@ def main():
 
     global CONFIG
     CONFIG = read_configuration(CONFFILE)
-    # locale.setlocale(locale.LC_MONETARY, CONFIG['locale'].get('monetary', ''))
-    # locale.setlocale(locale.LC_ALL, 'en_US')
+
+    global FIAT, CURRENCYLIST, CURRENCY, SYMBOL, SYMBOLLIST
+    FIAT = CONFIG['api'].get('currency', 'EUR')
+    CURRENCY = FIAT
+    CURRENCYLIST = [FIAT, 'ETH', 'BTC']
+
+    if FIAT == 'EUR':
+        SYMBOL = '€'
+        SYMBOLLIST = ['€','Ξ','Ƀ']
+    elif FIAT == 'USD':
+        SYMBOL = '$'
+        SYMBOLLIST = ['$','Ξ','Ƀ']
 
     requests_cache.install_cache(cache_name='api_cache', backend='memory',
         expire_after=int(CONFIG['api'].get('cache', 10)))

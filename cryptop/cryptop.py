@@ -28,6 +28,7 @@ COLUMN = SORTS.index('val')
 ORDER = True
 
 CURRENCY = 'EUR'
+NROFDECIMALS = 2
 
 KEY_ESCAPE = 27
 KEY_ZERO = 48
@@ -133,26 +134,18 @@ def conf_scr():
 
 def str_formatter(coin, val, held):
     '''Prepare the coin strings as per ini length/decimal place values'''
-    return '{:<5} {:>15.2f} {:>15.2f} {:>15.2f} {:>15.2f} {:>15.2f}'.format(
-        coin, float(held), val[0], float(held)*val[0], val[1], val[2])
+    return '{:<5} {:>15.2f} {:>15.{prec}f} {} {:>15.{prec}f} {} {:>15.{prec}f} {} {:>15.{prec}f} {}'.format(
+        coin, float(held), val[0], CURRENCY, float(held)*val[0], CURRENCY, val[1], CURRENCY, val[2], CURRENCY, prec=NROFDECIMALS)
 
 
 def write_scr(stdscr, wallet, y, x):
     '''Write text and formatting to screen'''
-    first_pad = '{:>{}}'.format('', CONFIG['theme'].getint('dec_places', 2) + 10 - 3)
-    second_pad = ' ' * (CONFIG['theme'].getint('field_length', 13) - 2)
-    third_pad =  ' ' * (CONFIG['theme'].getint('field_length', 13) - 3)
-
-    first_pad = ' ' * 5
-    second_pad = ' ' * 5
-    first_pad = ' ' * 5
-
     if y >= 1:
         stdscr.addnstr(0, 0, 'cryptop v0.1.9', x, curses.color_pair(2))
     if y >= 2:
         # header = 'COIN{}HODLING{}CURRENT PRICE{}TOTAL VALUE{}24H LOW{}24H HIGH{}24H CHANGE  '.format(
         #     first_pad, second_pad, second_pad, second_pad, second_pad, second_pad, second_pad)
-        header = '{:<5} {:>15} {:>15} {:>15} {:>15} {:>15} {:>15}'.format('COIN', 'HODLING', 'CURRENT PRICE', 'TOTAL VALUE', '24H LOW', '24H HIGH', '24H CHANGE')
+        header = '{:<5} {:>15} {:>19} {:>19} {:>19} {:>19} {:>15}'.format('COIN', 'HODLING', 'CURRENT PRICE', 'TOTAL VALUE', '24H LOW', '24H HIGH', '24H CHANGE')
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
     
     total = 0
@@ -170,13 +163,13 @@ def write_scr(stdscr, wallet, y, x):
                 if coinl.index(coin) + 2 < y:
                     stdscr.addnstr(coinl.index(coin) + 2, 0, str_formatter(coin, val, held), x, curses.color_pair(2))
                     if val[3] > 0:
-                        stdscr.addnstr(coinl.index(coin) + 2, 5 + 5 * 16, 
+                        stdscr.addnstr(coinl.index(coin) + 2, 5 + 16 + 4 * 20,
                         '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(4))
                     elif val[3] < 0:
-                        stdscr.addnstr(coinl.index(coin) + 2, 5 + 5 * 16, 
+                        stdscr.addnstr(coinl.index(coin) + 2, 5 + 16 + 4 * 20,
                         '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(5))
                     else:
-                        stdscr.addnstr(coinl.index(coin) + 2, 5 + 5 * 16, 
+                        stdscr.addnstr(coinl.index(coin) + 2, 5 + 16 + 4 * 20,
                         '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(2))
                 total += float(held) * val[0]
 
@@ -351,11 +344,13 @@ def mainc(stdscr):
 
         if inp in {KEY_f, KEY_F}:
             if y > 2:
-                global CURRENCY
+                global CURRENCY, NROFDECIMALS
                 if CURRENCY is 'EUR':
                     CURRENCY = 'ETH'
+                    NROFDECIMALS = 6
                 elif CURRENCY is 'ETH':
                     CURRENCY = 'EUR'
+                    NROFDECIMALS = 2
 
         if inp in {KEY_t, KEY_T}:
             if y > 2:

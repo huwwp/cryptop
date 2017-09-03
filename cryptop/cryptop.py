@@ -30,6 +30,8 @@ ORDER = True
 
 VIEW = 'WALLET'
 FIAT = 'EUR'
+CURRENCYLIST = [FIAT, 'ETH', 'BTC']
+CURRENCYCOUNTER = 0
 CURRENCY = FIAT
 NROFDECIMALS = 2
 
@@ -349,13 +351,14 @@ def mainc(stdscr):
 
         if inp in {KEY_f, KEY_F}:
             if y > 2:
-                global CURRENCY, NROFDECIMALS, FIAT
+                global CURRENCY, NROFDECIMALS, FIAT, CURRENCYCOUNTER, CURRENCYLIST
+                CURRENCYCOUNTER = (CURRENCYCOUNTER + 1) % 3
+                CURRENCY = CURRENCYLIST[CURRENCYCOUNTER]
+                
                 if CURRENCY is FIAT:
-                    CURRENCY = 'ETH'
-                    NROFDECIMALS = 6
-                elif CURRENCY is 'ETH':
-                    CURRENCY = FIAT
                     NROFDECIMALS = 2
+                else:
+                    NROFDECIMALS = 6
 
         if inp in {KEY_t, KEY_T}:
             if y > 2:

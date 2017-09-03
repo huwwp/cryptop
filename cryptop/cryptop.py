@@ -121,6 +121,8 @@ def conf_scr():
     curses.init_pair(5, getattr(curses, 'COLOR_GREEN'), 234)
     curses.init_pair(6, getattr(curses, 'COLOR_RED'), -1)
     curses.init_pair(7, getattr(curses, 'COLOR_RED'), 234)
+    curses.init_pair(8, 240, -1)
+    curses.init_pair(9, 240, 234)
     curses.halfdelay(10)
 
 def str_formatter(coin, val, held):
@@ -156,7 +158,10 @@ def write_scr(stdscr, wallet, y, x):
             for coin, val, held in zip(coinl, coinvl, heldl):
                 if coinl.index(coin) + 2 < y:
                     
-                    stdscr.addnstr(coinl.index(coin) + 2, 0, str_formatter(coin, val, held), x, curses.color_pair(2 + counter % 2))
+                    if float(held) > 0.0:
+                        stdscr.addnstr(coinl.index(coin) + 2, 0, str_formatter(coin, val, held), x, curses.color_pair(2 + counter % 2))
+                    else:
+                        stdscr.addnstr(coinl.index(coin) + 2, 0, str_formatter(coin, val, held), x, curses.color_pair(8 + counter % 2))
 
                     if val[3] > 0:
                         stdscr.addnstr(coinl.index(coin) + 2, 5 + 16 + 4 * 20,

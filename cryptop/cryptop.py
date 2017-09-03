@@ -110,10 +110,13 @@ def conf_scr():
     curses.start_color()
     curses.use_default_colors()
     text, banner, banner_text, background = get_theme_colors()
-    curses.init_pair(2, text, background)
-    curses.init_pair(3, banner_text, banner)
+    curses.init_pair(1, banner_text, banner)
+    curses.init_pair(2, text, -1)
+    curses.init_pair(3, text, 234)
     curses.init_pair(4, getattr(curses, 'COLOR_GREEN'), -1)
-    curses.init_pair(5, getattr(curses, 'COLOR_RED'), -1)
+    curses.init_pair(5, getattr(curses, 'COLOR_GREEN'), 234)
+    curses.init_pair(6, getattr(curses, 'COLOR_RED'), -1)
+    curses.init_pair(7, getattr(curses, 'COLOR_RED'), 234)
     curses.halfdelay(10)
 
 def str_formatter(coin, val, held):
@@ -130,7 +133,7 @@ def write_scr(stdscr, wallet, y, x):
     if y >= 2:
         header = '{:<5} {:>15} {:>19} {:>19} {:>19} {:>19} {:>15}'.format(
             'COIN', 'HODLING', 'CURRENT PRICE', 'TOTAL VALUE', '24H LOW', '24H HIGH', '24H CHANGE')
-        stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
+        stdscr.addnstr(1, 0, header, x, curses.color_pair(1))
     
     total = 0
     coinl = list(wallet.keys())
@@ -143,23 +146,27 @@ def write_scr(stdscr, wallet, y, x):
             coinl = list(x[0] for x in s)
             coinvl = list(x[1] for x in s)
             heldl = list(x[2] for x in s)
+            counter = 0            
             for coin, val, held in zip(coinl, coinvl, heldl):
                 if coinl.index(coin) + 2 < y:
-                    stdscr.addnstr(coinl.index(coin) + 2, 0, str_formatter(coin, val, held), x, curses.color_pair(2))
+                    
+                    stdscr.addnstr(coinl.index(coin) + 2, 0, str_formatter(coin, val, held), x, curses.color_pair(2 + counter % 2))
+
                     if val[3] > 0:
                         stdscr.addnstr(coinl.index(coin) + 2, 5 + 16 + 4 * 20,
-                        '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(4))
+                        '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(4 + counter % 2))
                     elif val[3] < 0:
                         stdscr.addnstr(coinl.index(coin) + 2, 5 + 16 + 4 * 20,
-                        '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(5))
+                        '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(6 + counter % 2))
                     else:
                         stdscr.addnstr(coinl.index(coin) + 2, 5 + 16 + 4 * 20,
-                        '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(2))
+                        '  {:>12.2f} %'.format(val[3]), x, curses.color_pair(2 + counter % 2))
                 total += float(held) * val[0]
+                counter += 1
 
     if y > len(coinl) + 3:
         stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10.2f} {}    '
-            .format(total, CURRENCY), x, curses.color_pair(3))
+            .format(total, CURRENCY), x, curses.color_pair(1))
         stdscr.addnstr(y - 1, 0,
             '[A] Add coin [R] Remove coin [T] Add transaction [F] Switch FIAT/ETH [V] View ledger [S] Sort [C] Cycle sort [Q] Exit', x,
             curses.color_pair(2))
@@ -265,7 +272,7 @@ def view_ledger(stdscr, ledger, x, y):
     if y >= 2:
         header = '{:<23} {:<12} {:<14} {:<11} {:<17} {:<23} {:>9}'.format(
             'DATE', 'OUT', 'AMOUNT', 'IN', 'AMOUNT', 'RATE OUT/IN', 'RATE  IN/OUT')
-        stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
+        stdscr.addnstr(1, 0, header, x, curses.color_pair(1))
     
     
     dates = list(ledger.keys())
@@ -274,13 +281,15 @@ def view_ledger(stdscr, ledger, x, y):
     if transactions:
 
         if y > 3:
+            counter = 0
             for date, transaction in list(zip(dates, transactions)):
                 info = transaction.split(',')
                 printme = '{:<15} {:>10} {:>15.6f} {:>10} {:>15.6f} {:>15.6f} {}/{} {:>15.6f} {}/{}'.format(
                     date, info[0], float(info[1]), info[2], float(info[3]), 
                     float(info[1])/float(info[3]), info[0], info[2], 
                     float(info[3])/float(info[1]), info[2], info[0])
-                stdscr.addnstr(dates.index(date) + 2, 0, printme, x, curses.color_pair(2))
+                stdscr.addnstr(dates.index(date) + 2, 0, printme, x, curses.color_pair(2 + counter % 2))
+                counter += 1
 
     if y > len(transactions) + 3:
         stdscr.addnstr(y - 1, 0,
@@ -371,7 +380,7 @@ def main():
     global CONFIG
     CONFIG = read_configuration(CONFFILE)
     # locale.setlocale(locale.LC_MONETARY, CONFIG['locale'].get('monetary', ''))
-    locale.setlocale(locale.LC_ALL, 'en_US')
+    # locale.setlocale(locale.LC_ALL, 'en_US')
 
     requests_cache.install_cache(cache_name='api_cache', backend='memory',
         expire_after=int(CONFIG['api'].get('cache', 10)))

@@ -123,7 +123,7 @@ def write_scr(stdscr, wallet, y, x):
     if y >= 2:
         header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}LOW  '.format(first_pad, second_pad, third_pad, first_pad, first_pad)
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
-    
+
     total = 0
     coinl = list(wallet.keys())
     heldl = list(wallet.values())
@@ -188,8 +188,12 @@ def add_coin(coin_amount, wallet):
         return wallet
 
     coin, amount = coin_amount.split(',')
+
     if not if_coin(coin):
         return wallet
+
+    if not amount:
+        amount = "0"
 
     wallet[coin] = amount
     return wallet

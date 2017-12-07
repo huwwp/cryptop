@@ -188,8 +188,12 @@ def add_coin(coin_amount, wallet):
         return wallet
 
     coin, amount = coin_amount.split(',')
+
     if not if_coin(coin):
         return wallet
+
+    if not amount:
+        amount = "0"
 
     wallet[coin] = amount
     return wallet

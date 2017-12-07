@@ -40,6 +40,7 @@ KEY_s = 115
 KEY_c = 99
 
 def read_configuration(confpath):
+    """Read the configuration file at given path."""
     # copy our default config file
     if not os.path.isfile(confpath):
         defaultconf = pkg_resources.resource_filename(__name__, 'config.ini')
@@ -161,7 +162,7 @@ def read_wallet():
 
 
 def write_wallet(wallet):
-    ''' Reads the wallet data to its json file '''
+    ''' Write wallet data to its json file '''
     with open(DATAFILE, 'w') as f:
         json.dump(wallet, f)
 

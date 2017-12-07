@@ -68,7 +68,7 @@ def get_price(coin, curr=None):
         data_raw = r.json()['RAW']
         return [(data_raw[c][curr]['PRICE'],
                 data_raw[c][curr]['HIGH24HOUR'],
-                data_raw[c][curr]['LOW24HOUR']) for c in coin.split(',')]
+                data_raw[c][curr]['LOW24HOUR']) for c in coin.split(',') if c in data_raw.keys()]
     except:
         sys.exit('Could not parse data')
 
@@ -123,7 +123,7 @@ def write_scr(stdscr, wallet, y, x):
     if y >= 2:
         header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}LOW  '.format(first_pad, second_pad, third_pad, first_pad, first_pad)
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
-    
+
     total = 0
     coinl = list(wallet.keys())
     heldl = list(wallet.values())
@@ -182,7 +182,7 @@ def get_string(stdscr, prompt):
 
 
 def add_coin(coin_amount, wallet):
-    ''' Remove a coin and its amount to the wallet '''
+    ''' Add a coin and its amount to the wallet '''
     coin_amount = coin_amount.upper()
     if not COIN_FORMAT.match(coin_amount):
         return wallet

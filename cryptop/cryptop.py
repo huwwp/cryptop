@@ -40,6 +40,7 @@ KEY_s = 115
 KEY_c = 99
 
 def read_configuration(confpath):
+    """Read the configuration file at given path."""
     # copy our default config file
     if not os.path.isfile(confpath):
         defaultconf = pkg_resources.resource_filename(__name__, 'config.ini')
@@ -68,7 +69,7 @@ def get_price(coin, curr=None):
         data_raw = r.json()['RAW']
         return [(data_raw[c][curr]['PRICE'],
                 data_raw[c][curr]['HIGH24HOUR'],
-                data_raw[c][curr]['LOW24HOUR']) for c in coin.split(',')]
+                data_raw[c][curr]['LOW24HOUR']) for c in coin.split(',') if c in data_raw.keys()]
     except:
         sys.exit('Could not parse data')
 
@@ -119,11 +120,11 @@ def write_scr(stdscr, wallet, y, x):
     third_pad =  ' ' * (CONFIG['theme'].getint('field_length', 13) - 3)
 
     if y >= 1:
-        stdscr.addnstr(0, 0, 'cryptop v0.1.9', x, curses.color_pair(2))
+        stdscr.addnstr(0, 0, 'cryptop v0.2.0', x, curses.color_pair(2))
     if y >= 2:
         header = '  COIN{}PRICE{}HELD {}VAL{}HIGH {}LOW  '.format(first_pad, second_pad, third_pad, first_pad, first_pad)
         stdscr.addnstr(1, 0, header, x, curses.color_pair(3))
-    
+
     total = 0
     coinl = list(wallet.keys())
     heldl = list(wallet.values())
@@ -161,7 +162,7 @@ def read_wallet():
 
 
 def write_wallet(wallet):
-    ''' Reads the wallet data to its json file '''
+    ''' Write wallet data to its json file '''
     with open(DATAFILE, 'w') as f:
         json.dump(wallet, f)
 
@@ -182,14 +183,18 @@ def get_string(stdscr, prompt):
 
 
 def add_coin(coin_amount, wallet):
-    ''' Remove a coin and its amount to the wallet '''
+    ''' Add a coin and its amount to the wallet '''
     coin_amount = coin_amount.upper()
     if not COIN_FORMAT.match(coin_amount):
         return wallet
 
     coin, amount = coin_amount.split(',')
+
     if not if_coin(coin):
         return wallet
+
+    if not amount:
+        amount = "0"
 
     wallet[coin] = amount
     return wallet

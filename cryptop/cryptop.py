@@ -10,6 +10,7 @@ import locale
 
 import requests
 import requests_cache
+import argparse
 
 # GLOBALS!
 BASEDIR = os.path.join(os.path.expanduser('~'), '.cryptop')
@@ -254,11 +255,24 @@ def mainc(stdscr):
                 global COLUMN
                 COLUMN = (COLUMN + 1) % len(SORTS)
 
+# Allow user to specify wallet and config filenames as arguments
+def handleargs():
+    global DATAFILE, CONFFILE
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-w", "--wallet", default=str(DATAFILE), type=str, help="Specify wallet filename")
+    parser.add_argument("-c", "--config", default=str(CONFFILE), type=str, help="Specify config filename")
+    args = parser.parse_args()
+    DATAFILE = os.path.join(BASEDIR, args.wallet)
+    CONFFILE = os.path.join(BASEDIR, args.config)
+
+    print ('Wallet path:', str(DATAFILE))
+    print ('Config path:', str(CONFFILE))
+
 def main():
     if os.path.isfile(BASEDIR):
         sys.exit('Please remove your old configuration file at {}'.format(BASEDIR))
     os.makedirs(BASEDIR, exist_ok=True)
-
+    handleargs()
     global CONFIG
     CONFIG = read_configuration(CONFFILE)
     locale.setlocale(locale.LC_MONETARY, CONFIG['locale'].get('monetary', ''))

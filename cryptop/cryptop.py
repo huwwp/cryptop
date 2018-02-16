@@ -109,16 +109,25 @@ def locale_currency_str(val, max_length=0):
 def str_formatter(coin, val, held):
     '''Prepare the coin strings as per ini length/decimal place values'''
     max_length = CONFIG['theme'].getint('field_length', 13)
-    dec_place = CONFIG['theme'].getint('dec_places', 2)
     avg_length = CONFIG['theme'].getint('dec_places', 2) + 10
     held_str = '{:>{},.8f}'.format(float(held), max_length)
-    val_str = '{:>{},.{}f}'.format(float(held) * val[0], max_length, dec_place)
-    return '  {:<5} {:>{}}  {} {:>{}} {:>{}} {:>{}}'.format(coin,
-        locale_currency_str(val[0], max_length), avg_length,
-        held_str[:max_length],
-        locale_currency_str(float(held) * val[0], max_length), avg_length,
-        locale_currency_str(val[1], max_length), avg_length,
-        locale_currency_str(val[2], max_length), avg_length)
+
+    price, high, low = val
+    price_str = locale_currency_str(price, max_length)
+    high_str = locale_currency_str(high, max_length)
+    low_str = locale_currency_str(low, max_length)
+    value_str = locale_currency_str(float(held) * price, max_length)
+
+    str = '  {coin:<5} {price:>{avg_length}}  {held_str} {value:>{avg_length}} {high:>{avg_length}} {low:>{avg_length}}'
+
+    return str.format( coin=coin,
+                       price=price_str,
+                       held_str=held_str[:max_length],
+                       value=value_str,
+                       high=high_str,
+                       low=low_str,
+                       avg_length=avg_length )
+
 
 def write_scr(stdscr, wallet, y, x):
     '''Write text and formatting to screen'''

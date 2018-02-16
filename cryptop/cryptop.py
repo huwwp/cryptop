@@ -7,6 +7,7 @@ import configparser
 import json
 import pkg_resources
 import locale
+from babel import numbers
 
 import requests
 import requests_cache
@@ -101,7 +102,8 @@ def conf_scr():
 
 
 def locale_currency_str(val, max_length=0):
-    currency_str = locale.currency(val, grouping=True)
+    currency = CONFIG['api'].get('currency', 'USD')
+    currency_str = numbers.format_currency( val, currency )
     if max_length:
         currency_str = currency_str[:max_length]
     return currency_str

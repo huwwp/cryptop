@@ -6,7 +6,6 @@ import shutil
 import configparser
 import json
 import pkg_resources
-import locale
 from babel import numbers
 
 import requests
@@ -279,7 +278,6 @@ def main():
 
     global CONFIG
     CONFIG = read_configuration(CONFFILE)
-    locale.setlocale(locale.LC_MONETARY, CONFIG['locale'].get('monetary', ''))
 
     requests_cache.install_cache(cache_name='api_cache', backend='memory',
         expire_after=int(CONFIG['api'].get('cache', 10)))

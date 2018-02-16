@@ -99,6 +99,13 @@ def conf_scr():
     curses.init_pair(3, banner_text, banner)
     curses.halfdelay(10)
 
+
+def locale_currency_str(val, max_length=0):
+    currency_str = locale.currency(val, grouping=True)
+    if max_length:
+        currency_str = currency_str[:max_length]
+    return currency_str
+
 def str_formatter(coin, val, held):
     '''Prepare the coin strings as per ini length/decimal place values'''
     max_length = CONFIG['theme'].getint('field_length', 13)
@@ -107,11 +114,11 @@ def str_formatter(coin, val, held):
     held_str = '{:>{},.8f}'.format(float(held), max_length)
     val_str = '{:>{},.{}f}'.format(float(held) * val[0], max_length, dec_place)
     return '  {:<5} {:>{}}  {} {:>{}} {:>{}} {:>{}}'.format(coin,
-        locale.currency(val[0], grouping=True)[:max_length], avg_length,
+        locale_currency_str(val[0], max_length), avg_length,
         held_str[:max_length],
-        locale.currency(float(held) * val[0], grouping=True)[:max_length], avg_length,
-        locale.currency(val[1], grouping=True)[:max_length], avg_length,
-        locale.currency(val[2], grouping=True)[:max_length], avg_length)
+        locale_currency_str(float(held) * val[0], max_length), avg_length,
+        locale_currency_str(val[1], max_length), avg_length,
+        locale_currency_str(val[2], max_length), avg_length)
 
 def write_scr(stdscr, wallet, y, x):
     '''Write text and formatting to screen'''
@@ -144,7 +151,7 @@ def write_scr(stdscr, wallet, y, x):
 
     if y > len(coinl) + 3:
         stdscr.addnstr(y - 2, 0, 'Total Holdings: {:10}    '
-            .format(locale.currency(total, grouping=True)), x, curses.color_pair(3))
+            .format(locale_currency_str(total)), x, curses.color_pair(3))
         stdscr.addnstr(y - 1, 0,
             '[A] Add/update coin [R] Remove coin [S] Sort [C] Cycle sort [0\Q]Exit', x,
             curses.color_pair(2))

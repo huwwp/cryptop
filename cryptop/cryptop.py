@@ -1,3 +1,4 @@
+import base64
 import curses
 import os
 import sys
@@ -7,6 +8,11 @@ import configparser
 import json
 import pkg_resources
 import locale
+import time
+import hmac
+import hashlib
+import threading
+from urllib.parse import urlencode, quote_plus
 
 import requests
 import requests_cache
@@ -26,6 +32,9 @@ SORTS = list(SORT_FNS.keys())
 COLUMN = SORTS.index('val')
 ORDER = True
 
+# will be updated with wallet + exchange balances
+FULL_PORTFOLIO = None
+
 KEY_ESCAPE = 27
 KEY_ZERO = 48
 KEY_A = 65
@@ -38,6 +47,7 @@ KEY_q = 113
 KEY_r = 114
 KEY_s = 115
 KEY_c = 99
+
 
 def read_configuration(confpath):
     """Read the configuration file at given path."""
@@ -99,6 +109,7 @@ def conf_scr():
     curses.init_pair(3, banner_text, banner)
     curses.halfdelay(10)
 
+
 def str_formatter(coin, val, held):
     '''Prepare the coin strings as per ini length/decimal place values'''
     max_length = CONFIG['theme'].getint('field_length', 13)
@@ -112,6 +123,172 @@ def str_formatter(coin, val, held):
         locale.currency(float(held) * val[0], grouping=True)[:max_length], avg_length,
         locale.currency(val[1], grouping=True)[:max_length], avg_length,
         locale.currency(val[2], grouping=True)[:max_length], avg_length)
+
+
+def bitfinex():
+    '''Collect balances from bitfinex exchange'''
+
+    key, secret = CONFIG['bitfinex'].get('key'), CONFIG['bitfinex'].get('secret')
+    currency_balances = {}
+
+    url = 'https://api.bitfinex.com/v1/balances'
+    nonce = str(time.time() * 1000000)
+    msg = json.dumps({"request": "/v1/balances", "nonce": nonce})
+    encoded_msg = base64.standard_b64encode(msg.encode('utf8'))
+    h = hmac.new(secret.encode('utf8'), encoded_msg, hashlib.sha384)
+    signature = h.hexdigest()
+    payload = {"X-BFX-APIKEY": key, "X-BFX-SIGNATURE": signature, "X-BFX-PAYLOAD": encoded_msg}
+
+    try:
+        resp = requests.post(url, headers=payload, timeout=5)
+
+        for entry in resp.json():
+
+            currency = entry['currency'].upper()
+            amount = float(entry['amount'])
+
+            if amount != 0 and if_coin(currency):
+                currency_balances[currency] = amount
+    except Exception:
+        pass
+
+    return currency_balances
+
+
+def bittrex():
+    '''Collect balances from bittrex exchange'''
+
+    key, secret = CONFIG['bittrex'].get('key'), CONFIG['bittrex'].get('secret')
+    currency_balances = {}
+
+    tpl = 'https://bittrex.com/api/v1.1/account/getbalances/?apikey={key}&nonce={nonce}'
+    nonce = str(int(time.time() * 1000))
+    url = tpl.format(key=key, nonce=nonce)
+    sig = hmac.new(
+        secret.encode(),
+        msg=url.encode(),
+        digestmod=hashlib.sha512
+    )
+    headers = dict(apisign=sig.hexdigest())
+
+    try:
+        resp = requests.get(url, headers=headers, timeout=5)
+        for entry in resp.json()['result']:
+
+            currency = entry['Currency'].upper()
+            # Bitcoin cash brought chaos into the world :(
+            currency = 'BCH' if currency == 'BCC' else currency
+            amount = float(entry['Balance'])
+
+            if amount != 0 and if_coin(currency):
+                currency_balances[currency] = amount
+    except Exception:
+        pass
+
+    return currency_balances
+
+
+def cryptopia():
+    '''Collect balances from cryptopia exchange'''
+
+    key = CONFIG['cryptopia'].get('key')
+    secret = CONFIG['cryptopia'].get('secret')
+    currency_balances = {}
+    url = 'https://www.cryptopia.co.nz/api/GetBalance/'
+    nonce = str(time.time())
+    m = hashlib.md5()
+    data = {}
+    post_data = json.dumps(data)
+    m.update(post_data.encode('utf-8'))
+    content_b64 = base64.b64encode(m.digest()).decode('utf-8')
+    sig_data = key + 'POST' + quote_plus(url).lower() + nonce + content_b64
+    sig = base64.b64encode(
+        hmac.new(
+            base64.b64decode(secret),
+            sig_data.encode('utf-8'),
+            hashlib.sha256
+        ).digest()
+    )
+
+    auth = "amx " + key + ":" + sig.decode('utf-8') + ":" + nonce
+    headers = {'Authorization': auth, 'Content-Type': 'application/json; charset=utf-8'}
+    try:
+        resp = requests.post(url, data=json.dumps(data), headers=headers, timeout=5)
+        resp.encoding = "utf-8-sig"
+        result = resp.json()
+        for entry in result['Data']:
+            currency = entry['Symbol']
+            amount = float(entry['Total'])
+            if amount != 0:
+                if if_coin(currency):
+                    currency_balances[currency] = amount
+    except Exception:
+        pass
+
+    return currency_balances
+
+
+def poloniex():
+    '''Collect balances from poloniex exchange'''
+
+    key, secret = CONFIG['poloniex'].get('key'), CONFIG['poloniex'].get('secret')
+    currency_balances = {}
+
+    url = 'https://poloniex.com/tradingApi'
+    args = {'command': 'returnCompleteBalances', 'nonce': int(time.time()*1000)}
+    payload = {'url': url, 'data': args}
+    sign = hmac.new(secret.encode('utf8'), urlencode(args).encode('utf8'), hashlib.sha512)
+    payload['headers'] = {
+        'Sign': sign.hexdigest(),
+        'Key': key
+    }
+    payload['timeout'] = 5
+
+    try:
+        resp = requests.post(**payload)
+        for currency, data in resp.json().items():
+            av = float(data['available'])
+            oo = float(data['onOrders'])
+            amount = av + oo
+            # Stellar Lumens are 'STR' on poloniex :(
+            currency = 'XLM' if currency == 'STR' else currency
+            if amount != 0 and if_coin(currency):
+                currency_balances[currency] = amount
+    except Exception as e:
+        pass
+
+    return currency_balances
+
+
+def update_full_portfolio(wallet):
+    '''Create a new wallet with balances added from exchanges'''
+
+    global FULL_PORTFOLIO
+
+    exchanges = ('bitfinex', 'bittrex', 'cryptopia', 'poloniex')
+    apis = []
+
+    for exchange in exchanges:
+        if exchange in CONFIG:
+            api = getattr(sys.modules[__name__], exchange)
+            apis.append(api)
+
+    # copy of wallet with float values
+    total_balances = {cb[0]:  float(cb[1]) for cb in wallet.items()}
+
+    # add vallues from exchange balances
+    for balances_getter in apis:
+        balances = balances_getter()
+        for currency, amount in balances.items():
+            if total_balances.get(currency):
+                total_balances[currency] += amount
+            else:
+                total_balances[currency] = amount
+
+    # convert back to string values
+    total_balances = {cb[0]: str(cb[1]) for cb in total_balances.items()}
+    FULL_PORTFOLIO = total_balances
+
 
 def write_scr(stdscr, wallet, y, x):
     '''Write text and formatting to screen'''
@@ -152,9 +329,12 @@ def write_scr(stdscr, wallet, y, x):
 
 def read_wallet():
     ''' Reads the wallet data from its json file '''
+    global FULL_PORTFOLIO
     try:
         with open(DATAFILE, 'r') as f:
-            return json.load(f)
+            wallet = json.load(f)
+            FULL_PORTFOLIO = wallet.copy()
+            return wallet
     except (FileNotFoundError, ValueError):
         # missing or malformed wallet
         write_wallet({})
@@ -208,19 +388,28 @@ def remove_coin(coin, wallet):
         wallet.pop(coin, None)
     return wallet
 
+
 def mainc(stdscr):
+
+    global FULL_PORTFOLIO
     inp = 0
     wallet = read_wallet()
     y, x = stdscr.getmaxyx()
     conf_scr()
     stdscr.bkgd(' ', curses.color_pair(2))
-    stdscr.clear()
-    #stdscr.nodelay(1)
-    # while inp != 48 and inp != 27 and inp != 81 and inp != 113:
+    c = 0
+
     while inp not in {KEY_ZERO, KEY_ESCAPE, KEY_Q, KEY_q}:
+        stdscr.clear()
+
+        if c % 100 == 0:
+            t = threading.Thread(target=update_full_portfolio, args=(wallet,))
+            t.start()
+        c += 1
+
         while True:
             try:
-                write_scr(stdscr, wallet, y, x)
+                write_scr(stdscr, FULL_PORTFOLIO, y, x)
             except curses.error:
                 pass
 
@@ -253,6 +442,7 @@ def mainc(stdscr):
             if y > 2:
                 global COLUMN
                 COLUMN = (COLUMN + 1) % len(SORTS)
+
 
 def main():
     if os.path.isfile(BASEDIR):
